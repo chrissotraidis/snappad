@@ -1,0 +1,32 @@
+diff --git a/lib/N64ModernRuntime/librecomp/src/rsp.cpp b/lib/N64ModernRuntime/librecomp/src/rsp.cpp
+--- a/lib/N64ModernRuntime/librecomp/src/rsp.cpp
++++ b/lib/N64ModernRuntime/librecomp/src/rsp.cpp
+@@ -257,20 +257,25 @@ void recomp::rsp::constants_init() {
+ bool recomp::rsp::run_task(uint8_t* rdram, const OSTask* task) {
++    assert(rsp_callbacks.get_rsp_microcode != nullptr);
++    RspUcodeFunc* ucode_func = rsp_callbacks.get_rsp_microcode(task);
++
++    // A game-specific, verified RSPRecomp result is more accurate than the
++    // Paper Mario-oriented fallback backends. Retain those backends only when
++    // the registered game has no recompiled audio microcode for this task.
+     if (task->t.type == M_AUDTASK) {
++        if (ucode_func != nullptr) goto run_recompiled_ucode;
+ #ifdef RECOMP_HAVE_PARALLEL_RSP
+         if (use_parallel_audio_rsp() && run_parallel_audio_task(rdram, task)) {
+             return true;
+         }
+ #endif
+         return run_hle_audio_task(rdram, task);
+     }
+ 
+-    assert(rsp_callbacks.get_rsp_microcode != nullptr);
+-    RspUcodeFunc* ucode_func = rsp_callbacks.get_rsp_microcode(task);
+-
+     if (ucode_func == nullptr) {
+         fprintf(stderr, "No registered RSP ucode for %" PRIu32 " (returned `nullptr`)\n", task->t.type);
+         return false;
+     }
+ 
+     // Load the OSTask into DMEM
++run_recompiled_ucode:
+     memcpy(&dmem[0xFC0], task, sizeof(OSTask));

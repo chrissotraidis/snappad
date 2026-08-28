@@ -1,0 +1,76 @@
+diff --git a/lib/rt64/src/hle/rt64_shared_queue_resources.h b/lib/rt64/src/hle/rt64_shared_queue_resources.h
+--- a/lib/rt64/src/hle/rt64_shared_queue_resources.h
++++ b/lib/rt64/src/hle/rt64_shared_queue_resources.h
+@@ -31,6 +31,14 @@ namespace RT64 {
+         uint32_t swapChainHeight = 0;
+         uint32_t swapChainRate = 0;
+         std::atomic<uint64_t> presentedFrameCount = 0;
++        // Monotonic presentation pacing counters. These remain aggregate-only
++        // so sampling never allocates or logs on the latency-sensitive present
++        // thread.
++        std::atomic<uint64_t> presentIntervalCount = 0;
++        std::atomic<uint64_t> presentIntervalTotalUs = 0;
++        std::atomic<uint64_t> presentIntervalMaxUs = 0;
++        std::atomic<uint64_t> presentIntervalsOver50Ms = 0;
++        std::atomic<uint64_t> presentIntervalsOver100Ms = 0;
+         hlslpp::float2 resolutionScale = 1.0f;
+         uint32_t targetRate = 0;
+         UserConfiguration userConfig;
+diff --git a/lib/rt64/src/hle/rt64_present_queue.cpp b/lib/rt64/src/hle/rt64_present_queue.cpp
+--- a/lib/rt64/src/hle/rt64_present_queue.cpp
++++ b/lib/rt64/src/hle/rt64_present_queue.cpp
+@@ -4,6 +4,8 @@
+ 
+ #include "rt64_present_queue.h"
+ 
++#include <algorithm>
++
+ #include "common/rt64_thread.h"
+ #include "rhi/rt64_render_hooks.h"
+ 
+@@ -33,2 +35,3 @@ namespace RT64 {
+         presentId = 0;
++        lastSuccessfulPresentTimestamp = Timestamp();
+     }
+@@ -414,6 +417,31 @@ namespace RT64 {
+                 swapChainValid = ext.swapChain->present(swapChainIndex, &waitSemaphore, 1);
+                 if (swapChainValid) {
+                     ext.sharedResources->presentedFrameCount.fetch_add(1, std::memory_order_relaxed);
++                    const Timestamp successfulPresentTimestamp = Timer::current();
++                    if (lastSuccessfulPresentTimestamp != Timestamp()) {
++                        const uint64_t intervalUs = static_cast<uint64_t>(std::max<int64_t>(
++                            0, Timer::deltaMicroseconds(
++                                lastSuccessfulPresentTimestamp, successfulPresentTimestamp)));
++                        ext.sharedResources->presentIntervalCount.fetch_add(
++                            1, std::memory_order_relaxed);
++                        ext.sharedResources->presentIntervalTotalUs.fetch_add(
++                            intervalUs, std::memory_order_relaxed);
++                        uint64_t previousMax =
++                            ext.sharedResources->presentIntervalMaxUs.load(std::memory_order_relaxed);
++                        while (previousMax < intervalUs
++                            && !ext.sharedResources->presentIntervalMaxUs.compare_exchange_weak(
++                                previousMax, intervalUs, std::memory_order_relaxed)) {
++                        }
++                        if (intervalUs > 50000) {
++                            ext.sharedResources->presentIntervalsOver50Ms.fetch_add(
++                                1, std::memory_order_relaxed);
++                        }
++                        if (intervalUs > 100000) {
++                            ext.sharedResources->presentIntervalsOver100Ms.fetch_add(
++                                1, std::memory_order_relaxed);
++                        }
++                    }
++                    lastSuccessfulPresentTimestamp = successfulPresentTimestamp;
+                 }
+                 presentProfiler.logAndRestart();
+             }
+diff --git a/lib/rt64/src/hle/rt64_present_queue.h b/lib/rt64/src/hle/rt64_present_queue.h
+--- a/lib/rt64/src/hle/rt64_present_queue.h
++++ b/lib/rt64/src/hle/rt64_present_queue.h
+@@ -50,5 +50,6 @@ namespace RT64 {
+         std::unique_ptr<Inspector> inspector;
+         ProfilingTimer presentProfiler = ProfilingTimer(120);
+         Timestamp presentTimestamp;
++        Timestamp lastSuccessfulPresentTimestamp;
+         VIHistory viHistory;
+         bool presentWaitEnabled = false;

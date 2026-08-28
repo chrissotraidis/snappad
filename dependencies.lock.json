@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "updated": "2026-08-26",
+  "notes": [
+    "SnapPad is a separate integration repository. The Pokemon Snap decomp remains an ignored, pinned local build input.",
+    "PaperPad is a read-only implementation reference. ReCut vendors N64ModernRuntime, N64Recomp, RSPRecomp, and RT64.",
+    "All source checkouts have push disabled. Public redistribution remains blocked by docs/RIGHTS-STATUS.md."
+  ],
+  "sources": {
+    "pokemonSnap": {
+      "url": "https://github.com/ethteck/pokemonsnap.git",
+      "commit": "11ee0fec2143bdd636ee0e9c714a402fd8c7d9fe",
+      "provenance": "Audited Pokemon Snap decomp revision"
+    },
+    "paperpadReference": {
+      "url": "https://github.com/chrissotraidis/paperpad.git",
+      "commit": "74b6e45830a06c7f274c5ac1ddd7c625bc13a557",
+      "provenance": "Read-only Apple implementation reference"
+    },
+    "paperMarioReCut": {
+      "url": "https://github.com/SMCGames/Paper-Mario-ReCut.git",
+      "commit": "098be0a501eecd5bb894a47964061d05eeedc3a2",
+      "provenance": "PaperPad-pinned vendor tree containing N64ModernRuntime, N64Recomp, RSPRecomp, and RT64"
+    },
+    "mupen64plusRspHle": {
+      "url": "https://github.com/mupen64plus/mupen64plus-rsp-hle.git",
+      "commit": "8a7a472a7172eb2c8725b305eae26818ed7b51a2",
+      "provenance": "Optional diagnostic HLE audio backend; not selected silently"
+    },
+    "sdl2": {
+      "url": "https://github.com/libsdl-org/SDL.git",
+      "commit": "5d249570393f7a37e037abf22cd6012a4cc56a71",
+      "provenance": "PaperPad-pinned SDL 2.32.10 source"
+    },
+    "zstd": {
+      "url": "https://github.com/facebook/zstd.git",
+      "commit": "794ea1b0afca0f020f4e57b6732332231fb23c70",
+      "provenance": "PaperPad-pinned zstd 1.5.6 source"
+    }
+  },
+  "rom": {
+    "title": "Pokemon Snap (USA)",
+    "normalizedByteOrder": "z64-big-endian",
+    "size": 16777216,
+    "sha1": "edc7c49cc568c045fe48be0d18011c30f393cbaf",
+    "redistribution": "forbidden"
+  },
+  "decomp": {
+    "configureCpp": "cpp-16",
+    "expectedRom": "build/pokemonsnap.z64",
+    "expectedElf": "build/pokemonsnap.elf",
+    "expectedMap": "build/pokemonsnap.map",
+    "toolchain": {
+      "mipsBinutils": {
+        "version": "2.46.1",
+        "url": "https://sourceware.org/pub/binutils/releases/binutils-2.46.1.tar.xz",
+        "sha512": "a5c65e56e400ed3fb8906a995dbb93eb5bea54b16344244653d7f44ef29ceb60270da263b19d25302c37759784e14fcb4b9421b29e0e2c7f450bd99f6bb4595c"
+      },
+      "ido53MacArm64CcSha256": "d88651af7d589c645fe21f7926f16c2979f8af0c80ab6e67f249e4652966111e",
+      "ido71MacArm64CcSha256": "fdc7cbaa936e11b731c9b50118d106efae71a299d59f1e8e2cd126306acbf78f",
+      "asmProcessor101MacArm64Sha256": "34cbb857d68dbf723d95bb6c4521a4b053c7e186442f83332826a8f96bf6afa4"
+    }
+  }
+}

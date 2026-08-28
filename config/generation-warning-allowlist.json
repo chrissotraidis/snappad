@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "pattern": "^\\[Info\\] Ambiguous jal target 0x800(?:32A20|33BE0|38DE0) in function [A-Za-z0-9_]+, falling back to function lookup$",
+      "rationale": "The exact rebuilt ELF intentionally gives libultra/math weak aliases the same resident code addresses (__sinf/sinf/fsin, __cosf/cosf/fcos, and _bzero/bzero/blkclr). Runtime lookup preserves that exact address identity; generated manual sizes are bounded by the owning input object's .text range."
+    },
+    {
+      "pattern": "^\\[Info\\] Ambiguous jal target 0x801DCC74 in function start_scene_manager, falling back to function lookup$",
+      "rationale": "Three mutually exclusive scene overlays intentionally reuse VRAM 0x801DCC74. Runtime function lookup is required to select the function belonging to the currently loaded overlay; later runtime gates must exercise this transition."
+    },
+    {
+      "pattern": "^\\[Info\\] Indirect tail call in recomp_entrypoint$",
+      "rationale": "The exact ROM entry assembly loads game_main into a register and tail-jumps with jr; preserving that register-indirect transfer through generated function lookup is faithful to the original entry sequence."
+    }
+  ]
+}

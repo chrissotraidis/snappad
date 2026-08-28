@@ -1,0 +1,41 @@
+# Read-only/local source inputs and private ROMs
+ref/
+
+# ROM-derived and generated AOT output
+generated/
+
+# Build, evidence, and private runtime output
+build/
+build-*/
+logs/
+artifacts/
+docs/artifacts/
+
+# Apple packages, signing, and crash output
+*.app
+*.ipa
+*.xcarchive
+*.dSYM
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.p8
+*.crash
+*.ips
+
+# Game data, executable metadata, and saves
+*.z64
+*.v64
+*.n64
+*.rom
+*.elf
+*.sav
+*.srm
+*.fla
+
+# Local/editor output
+.DS_Store
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/

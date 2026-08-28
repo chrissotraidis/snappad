@@ -1,0 +1,15 @@
+diff --git a/lib/N64ModernRuntime/librecomp/src/pi.cpp b/lib/N64ModernRuntime/librecomp/src/pi.cpp
+index 7669c65..80e76e2 100644
+--- a/lib/N64ModernRuntime/librecomp/src/pi.cpp
++++ b/lib/N64ModernRuntime/librecomp/src/pi.cpp
+@@ -198,7 +198,9 @@ void save_read(RDRAM_ARG PTR(void) rdram_address, uint32_t offset, uint32_t count
+ }
+ 
+ void save_clear(uint32_t start, uint32_t size, char value) {
+-    assert(start + size < save_context.save_buffer.size());
++    // A range ending exactly at the backing buffer boundary is valid. FlashRAM
++    // full-chip erase clears [0, 0x20000), which previously tripped this assert.
++    assert(start + size <= save_context.save_buffer.size());
+ 
+     {
+         std::lock_guard lock { save_context.save_buffer_mutex };
