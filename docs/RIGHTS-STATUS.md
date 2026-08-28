@@ -1,9 +1,13 @@
 # SnapPad rights status
 
-Status: **private-only**
-Last reviewed: 2026-08-26
+Status: **maintainer-authorized community release; upstream rights unresolved**
+Last reviewed: 2026-08-28
 
-Chris has authorized private technical feasibility and development work on SnapPad. No public source release, binary, IPA, tag, package, generated output, screenshot set, or other publication is authorized by this status.
+On 28 August 2026, Chris accepted the current physical-iPad build as stable and
+explicitly authorized the first public SnapPad integration-source snapshot,
+tag, screenshot, and free unsigned ROM-free IPA. This records the maintainer's
+release decision; it does not establish permission from upstream authors or
+Nintendo and is not legal advice.
 
 ## Current findings
 
@@ -16,10 +20,23 @@ Chris has authorized private technical feasibility and development work on SnapP
 
 SnapPad is a separate integration repository. The pinned Pokémon Snap decomp is an ignored local build input under `ref/pokemonsnap`; no decomp source is copied into SnapPad. This topology is selected for private engineering and does not itself resolve public redistribution rights.
 
-## Decisions still required for publication
+## Current publication boundary
+
+The v0.1.0 release may include the SnapPad integration source, patches, scripts,
+documentation, screenshots, an unsigned ROM-free IPA, scoped rights notice,
+and dependency notices. It must not include any ROM, rebuilt ROM, extracted
+asset, generated AOT source input, save, photograph, private log, signing
+material, or maintainer provisioning profile.
+
+The release is source-available community software, not a broad license grant
+for upstream or translated game code. Paid access, commercial licensing,
+TestFlight, App Store, or other official-store distribution still requires a
+new decision and independent rights review.
+
+## Unresolved rights questions
 
 1. Explicit maintainer/license clarity for the decomp source and translated-code boundary.
-2. A complete dependency and binary-notice audit against the exact candidate.
-3. Separate explicit authorization from Chris for any source release and any binary/IPA release.
+2. Independent legal review before broader or commercial distribution.
+3. Continued dependency and binary-notice audits for every exact candidate.
 
 This is an engineering gate, not legal advice.

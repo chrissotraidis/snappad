@@ -26,6 +26,13 @@ xcrun vtool -show-build "$binary" | rg -q 'minos +15\.0$' || \
     die "Simulator executable minimum OS is not iOS 15.0"
 [[ -f "$app/PrivacyInfo.xcprivacy" ]] || die "privacy manifest missing"
 plutil -lint "$app/PrivacyInfo.xcprivacy" >/dev/null || die "privacy manifest is invalid"
+[[ -f "$app/Assets.car" ]] || die "compiled asset catalog missing"
+[[ "$(plist_value CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName)" == "AppIcon" ]] || \
+    die "iPhone app icon metadata missing"
+[[ "$(plist_value 'CFBundleIcons~ipad:CFBundlePrimaryIcon:CFBundleIconName')" == "AppIcon" ]] || \
+    die "iPad app icon metadata missing"
+[[ -f "$app/AppIcon60x60@2x.png" ]] || die "compiled iPhone app icon missing"
+[[ -f "$app/AppIcon76x76@2x~ipad.png" ]] || die "compiled iPad app icon missing"
 
 unexpected_runtime=$(otool -L "$binary" | awk 'NR > 1 { print $1 }' | \
     rg -v '^(/System/Library/|/usr/lib/)' || true)
@@ -41,4 +48,4 @@ if LC_ALL=C strings -a "$binary" | \
     die "Simulator executable contains a personal path or likely credential"
 fi
 
-note "AOT arm64 iOS Simulator bundle audit passed (not launched)."
+note "AOT arm64 iOS Simulator bundle audit passed with iPhone/iPad icons (not launched)."

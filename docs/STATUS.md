@@ -4,7 +4,7 @@ Updated: 2026-08-28
 
 ## Current gate
 
-**P2 accepted at Simulator scope; P3 physical iPad/iPhone acceptance is next.**
+**v0.1.0 accepted for a free unsigned community release; broader compatibility work continues.**
 
 The reproducible foundation and current macOS product boundary are accepted.
 The exact supported ROM rebuilds byte-for-byte, the CPU and audio RSP outputs
@@ -15,17 +15,15 @@ measured cadence, and a 60-minute soak. Exhaustively collecting report subjects
 is no longer the active product-QA loop. Full-course/credits compatibility
 remains a later pre-release requirement under P4.
 
-The current Simulator candidate has accepted PaperPad-derived iPad and iPhone
+The current mobile candidate has accepted PaperPad-derived iPad and iPhone
 layouts, core mobile journeys, native iPad two-finger shutter input, the shared
 multi-touch input path, lifecycle behavior, focused cadence, and ROM-free
-bundle audits. The next product gate is a signed physical-device run for exact
-iPhone/iPad touch feel, controller handoff, audio interruption, sustained
-cadence, and thermals. Full-game report collection is not the fallback task
-while device prerequisites are unavailable.
-
-The P3 prerequisite check on 2026-08-28 finds no connected iPhone or iPad and
-no valid Apple code-signing identity. The Mac itself is available and unlocked;
-the gate is device/signing state, not desktop access.
+bundle audits. On 28 August 2026, the signed build ran on a physical 12.9-inch
+iPad Pro with iPadOS 26.6, recognized the private supported ROM, initialized the
+native Metal and verified audio paths, and recorded live touch input. The
+maintainer accepted that build as stable and authorized v0.1.0. Dedicated
+physical-iPhone, controller, interruption, sustained-cadence, and thermal
+coverage remains post-release compatibility work.
 
 SnapPad now also offers **Wide (Experimental)** as a distinct, default-off
 graphics option. Unlike Fill Screen, it uses RT64's expanded projection. A
@@ -43,7 +41,10 @@ the physical handoff must treat Wide as an enhancement check, not baseline.
 - Pokémon Snap decomp is pinned at
   `11ee0fec2143bdd636ee0e9c714a402fd8c7d9fe`; PaperPad is pinned at
   `74b6e45830a06c7f274c5ac1ddd7c625bc13a557`; dependency push URLs are disabled.
-- Rights status remains `private-only`. No public distribution is authorized.
+- Rights status records explicit maintainer authorization for the free v0.1.0
+  integration-source snapshot and unsigned ROM-free IPA. Upstream and
+  translated-code permission remains legally unresolved; no commercial or
+  official-store rights claim is made.
 - The original supported `.v64` input remains in `ref/`. The ignored normalized
   ROM and exact rebuilt ROM match SHA-1
   `edc7c49cc568c045fe48be0d18011c30f393cbaf`; the ELF, linker map, entrypoint

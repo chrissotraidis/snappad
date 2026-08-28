@@ -168,6 +168,22 @@ UIViewController* topViewController(UIViewController* controller) {
     return controller;
 }
 
+UIWindowScene* foregroundWindowScene() {
+    UIWindowScene* fallback = nil;
+    for (UIScene* scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:UIWindowScene.class]) continue;
+        UIWindowScene* windowScene = static_cast<UIWindowScene*>(scene);
+        if (scene.activationState == UISceneActivationStateForegroundActive) {
+            return windowScene;
+        }
+        if (fallback == nil &&
+            scene.activationState == UISceneActivationStateForegroundInactive) {
+            fallback = windowScene;
+        }
+    }
+    return fallback;
+}
+
 void restoreLandscapeOrientation(UIViewController* presenter) {
     if (presenter == nil) return;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -284,12 +300,14 @@ didPickDocumentsAtURLs:(NSArray<NSURL*>*)urls {
     }
     self.statusLabel.textColor = [UIColor colorWithRed:1.0 green:0.48 blue:0.45 alpha:1.0];
     self.statusLabel.text = error.localizedDescription ?: @"SnapPad could not import that file.";
+    [self.view.window makeKeyAndVisible];
     restoreLandscapeOrientation(self);
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController*)controller {
     self.statusLabel.textColor = [UIColor colorWithWhite:0.72 alpha:1.0];
     self.statusLabel.text = @"No ROM selected. Choose your legal copy whenever you're ready.";
+    [self.view.window makeKeyAndVisible];
     restoreLandscapeOrientation(self);
 }
 
@@ -414,8 +432,15 @@ extern "C" bool snappad_prepare_rom_setup(void) {
     }
     if (validateInstalledROM(root)) return true;
 
+    UIWindowScene* scene = foregroundWindowScene();
+    if (scene == nil) {
+        std::fprintf(stderr, "[SnapPad] setup window scene unavailable\n");
+        return false;
+    }
+
     SnapPadROMSetupController* controller = [[SnapPadROMSetupController alloc] init];
-    UIWindow* window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
+    UIWindow* window = [[UIWindow alloc] initWithWindowScene:scene];
+    window.frame = scene.coordinateSpace.bounds;
     window.windowLevel = UIWindowLevelNormal + 2.0;
     window.rootViewController = controller;
     [window makeKeyAndVisible];

@@ -49,9 +49,13 @@ build=(
     -sdk iphoneos
 )
 if [[ "$mode" == signed ]]; then
+    # Clear a cached unsigned configuration before asking Xcode to sign only
+    # the application target. Enabling signing project-wide also makes Xcode
+    # try to sign every static-library target.
+    configure+=(-U CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED)
     configure+=("-DDEVELOPMENT_TEAM=$team_id")
-    build+=(CODE_SIGN_STYLE=Automatic "DEVELOPMENT_TEAM=$team_id" \
-        "CODE_SIGN_IDENTITY=Apple Development")
+    build+=(-allowProvisioningUpdates CODE_SIGN_STYLE=Automatic \
+        "DEVELOPMENT_TEAM=$team_id" "CODE_SIGN_IDENTITY=Apple Development")
 else
     configure+=(-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
     build+=(CODE_SIGNING_ALLOWED=NO)
@@ -63,6 +67,17 @@ fi
 app="$build_dir/Release-iphoneos/SnapPad.app"
 [[ -d "$app" ]] || app="$build_dir/Release/SnapPad.app"
 [[ -d "$app" ]] || die "SnapPad iPhoneOS app was not produced"
+if [[ "$mode" == signed ]]; then
+    [[ -d "$app/_CodeSignature" && -f "$app/embedded.mobileprovision" ]] || \
+        die "signed build did not produce a code signature and provisioning profile"
+else
+    # Xcode can leave signing files behind when this shared build directory was
+    # previously used for a signed device build. Public unsigned output must
+    # not inherit either the bundle signature or the provisioning profile.
+    rm -rf "$app/_CodeSignature"
+    rm -f "$app/embedded.mobileprovision"
+    codesign --remove-signature "$app" >/dev/null 2>&1 || true
+fi
 "$script_dir/audit-ios-device-bundle.sh" "$app"
 if [[ "$mode" == signed ]]; then
     note "Private signed iPad/iPhone app ready: $app"

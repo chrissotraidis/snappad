@@ -27,6 +27,13 @@ xcrun vtool -show-build "$binary" | rg -q 'minos +15\.0$' || \
 [[ -f "$app/PrivacyInfo.xcprivacy" ]] || die "privacy manifest missing"
 plutil -lint "$app/PrivacyInfo.xcprivacy" >/dev/null || \
     die "privacy manifest is invalid"
+[[ -f "$app/Assets.car" ]] || die "compiled asset catalog missing"
+[[ "$(plist_value CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName)" == "AppIcon" ]] || \
+    die "iPhone app icon metadata missing"
+[[ "$(plist_value 'CFBundleIcons~ipad:CFBundlePrimaryIcon:CFBundleIconName')" == "AppIcon" ]] || \
+    die "iPad app icon metadata missing"
+[[ -f "$app/AppIcon60x60@2x.png" ]] || die "compiled iPhone app icon missing"
+[[ -f "$app/AppIcon76x76@2x~ipad.png" ]] || die "compiled iPad app icon missing"
 
 unexpected_runtime=$(otool -L "$binary" | awk 'NR > 1 { print $1 }' | \
     rg -v '^(/System/Library/|/usr/lib/)' || true)
@@ -45,10 +52,10 @@ fi
 if [[ -d "$app/_CodeSignature" || -f "$app/embedded.mobileprovision" ]]; then
     codesign --verify --strict "$app" >/dev/null 2>&1 || \
         die "signed iPhoneOS bundle fails strict code-signature verification"
-    note "Private arm64 iPhoneOS bundle audit passed (development signed; not installed)."
+    note "Private arm64 iPhoneOS bundle audit passed with iPhone/iPad icons (development signed; not installed)."
 else
     if otool -l "$binary" | rg -q 'cmd LC_CODE_SIGNATURE'; then
         die "unsigned iPhoneOS bundle retains a code-signature load command"
     fi
-    note "Private arm64 iPhoneOS bundle audit passed (unsigned; not installable yet)."
+    note "Private arm64 iPhoneOS bundle audit passed with iPhone/iPad icons (unsigned; not installable yet)."
 fi

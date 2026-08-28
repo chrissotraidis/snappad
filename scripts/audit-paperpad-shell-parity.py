@@ -145,6 +145,21 @@ def normalize_rom_setup(text: str) -> str:
     # restoration and delayed result presentation as audited shell hardening.
     text = text.replace(
         "void styleButton(UIButton* button) {",
+        "UIWindowScene* foregroundWindowScene() {\n"
+        "    UIWindowScene* fallback = nil;\n"
+        "    for (UIScene* scene in UIApplication.sharedApplication.connectedScenes) {\n"
+        "        if (![scene isKindOfClass:UIWindowScene.class]) continue;\n"
+        "        UIWindowScene* windowScene = static_cast<UIWindowScene*>(scene);\n"
+        "        if (scene.activationState == UISceneActivationStateForegroundActive) {\n"
+        "            return windowScene;\n"
+        "        }\n"
+        "        if (fallback == nil &&\n"
+        "            scene.activationState == UISceneActivationStateForegroundInactive) {\n"
+        "            fallback = windowScene;\n"
+        "        }\n"
+        "    }\n"
+        "    return fallback;\n"
+        "}\n\n"
         "void restoreLandscapeOrientation(UIViewController* presenter) {\n"
         "    if (presenter == nil) return;\n"
         "    dispatch_async(dispatch_get_main_queue(), ^{\n"
@@ -176,6 +191,7 @@ def normalize_rom_setup(text: str) -> str:
         "    self.statusLabel.text = error.localizedDescription ?: @\"SnapPad could not import that file.\";\n"
         "}",
         "    self.statusLabel.text = error.localizedDescription ?: @\"SnapPad could not import that file.\";\n"
+        "    [self.view.window makeKeyAndVisible];\n"
         "    restoreLandscapeOrientation(self);\n"
         "}",
         1,
@@ -184,9 +200,22 @@ def normalize_rom_setup(text: str) -> str:
         "    self.statusLabel.text = @\"No ROM selected. Choose your legal copy whenever you're ready.\";\n"
         "}",
         "    self.statusLabel.text = @\"No ROM selected. Choose your legal copy whenever you're ready.\";\n"
+        "    [self.view.window makeKeyAndVisible];\n"
         "    restoreLandscapeOrientation(self);\n"
         "}",
         1,
+    )
+    text = text.replace(
+        "    SnapPadROMSetupController* controller = [[SnapPadROMSetupController alloc] init];\n"
+        "    UIWindow* window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];",
+        "    UIWindowScene* scene = foregroundWindowScene();\n"
+        "    if (scene == nil) {\n"
+        "        std::fprintf(stderr, \"[SnapPad] setup window scene unavailable\\n\");\n"
+        "        return false;\n"
+        "    }\n\n"
+        "    SnapPadROMSetupController* controller = [[SnapPadROMSetupController alloc] init];\n"
+        "    UIWindow* window = [[UIWindow alloc] initWithWindowScene:scene];\n"
+        "    window.frame = scene.coordinateSpace.bounds;",
     )
     old_manager_delegate = """- (void)documentPicker:(UIDocumentPickerViewController*)controller
 didPickDocumentsAtURLs:(NSArray<NSURL*>*)urls {

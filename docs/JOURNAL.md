@@ -1329,3 +1329,84 @@ Append-only. Acceptance claims distinguish source inspection, compilation, launc
   `75182baf791e263ac1865d6b4663a69edb0933d2c959a43b55ffc892deb0e373`.
 - **Evidence:** `artifacts/2026-08-28/experimental-widescreen/` contains the
   Wide Beach frame and restored Original Beach frame.
+
+## 2026-08-28 — First-run cancellation repaired and public README tightened
+
+- **Observed defect:** on a fresh iPad Simulator install, cancelling the native
+  Files picker could leave SnapPad's scene behind the previously foregrounded
+  app. The setup controller updated its retry text, but its temporary `UIWindow`
+  was created without the active `UIWindowScene`.
+- **Repair:** first-run setup now resolves the foreground scene, constructs its
+  window with `initWithWindowScene:`, and explicitly restores that window after
+  picker cancellation or a rejected file. The PaperPad parity normalizer
+  records this as deliberate SnapPad lifecycle hardening.
+- **Current observation:** the rebuilt ROM-free app stayed foreground on an
+  isolated iPad Pro 11-inch (M5) Simulator running iOS 26.5, restored
+  landscape, displayed `No ROM selected`, and allowed the picker to open again.
+  With the verified private ROM present, AOT Metal gameplay, the utility menu,
+  settings presentation, vertical settings scrolling, and return to gameplay
+  were also observed.
+- **Environment limit:** an unrelated GoldenPad LAN test automation repeatedly
+  launched itself on other booted iPad Simulators. Those cross-app frames were
+  rejected as SnapPad evidence; the cancellation result above was repeated on
+  a separate device before its private ROM was seeded.
+- **Public-facing update:** the README now leads with the player outcome,
+  separates install availability from technical readiness, documents the
+  retryable Files flow and Simulator orientation quirk, and shows current
+  first-run and settings captures without including private game data.
+
+## 2026-08-28 — First physical iPad deployment establishes preserved state
+
+- **Target:** the current candidate was development-signed and installed for
+  the first time on an iPad Pro 12.9-inch (6th generation) running iPadOS 26.6.
+  SnapPad did not previously exist on the device, so this deployment created
+  the accepted persistent container rather than replacing earlier SnapPad data.
+- **Signing repair:** `scripts/build-ios-device.sh --signed` could inherit the
+  prior unsigned build directory's `CODE_SIGNING_ALLOWED=NO` cache and then
+  misleadingly announce a signed result. Signed mode now clears that cache,
+  allows Xcode provisioning updates, and fails unless both the signature and
+  embedded provisioning profile exist. The signing team was taken from the
+  profile's `TeamIdentifier`, not the certificate display-name suffix.
+- **Private ROM:** the verified normalized Pokémon Snap US ROM was copied only
+  to SnapPad's private Application Support directory with owner-only
+  permissions. A device-to-host readback matched the locked SHA-1 exactly; the
+  ROM-free application bundle remained unchanged.
+- **Runtime:** SnapPad remained active after launch. Its device-local log
+  registered the expected game core, created a native 2732×2048 Metal drawable,
+  routed the first audio task through verified `aspMain`, and recorded live
+  touch input. This is stronger than installation alone, but the full physical
+  acceptance checklist remains open.
+- **Preservation baseline:** the initial Application Support payload and current
+  preferences plist were copied to ignored
+  `artifacts/device-backups/2026-08-28-initial/`. Project instructions now
+  require a private backup before every device update, in-place installation,
+  and post-update verification of ROM, saves, and preferences. Uninstalling,
+  changing the bundle identifier, or using `--remove-existing-content` requires
+  explicit reset authorization.
+
+## 2026-08-28 — v0.1.0 public release authorized
+
+- **Decision:** after hands-on physical-iPad play, Chris accepted the current
+  build as stable and explicitly authorized the first public integration-source
+  snapshot, release tag, supplied title-screen image, and free unsigned ROM-free
+  IPA. This supersedes the earlier private-only release decision for this exact
+  scope without claiming upstream legal clearance.
+- **Player path:** the README now leads with the supplied physical-iPad title
+  frame directly below the platform badges, removes the rejected prior hero
+  image, links the v0.1.0 IPA, and explains AltStore Classic, AltServer,
+  Developer Mode, ROM import, refresh limits, and data-preserving updates in
+  consumer terms.
+- **Package boundary:** the new public package scripts accept only an unsigned
+  ARM64 iPhoneOS app, require the privacy manifest and iPhone/iPad icon assets,
+  reject ROM/save/generated/signing/private data, include the scoped rights
+  notice plus pinned dependency licenses, and emit a SHA-256 checksum.
+- **Honest boundary:** v0.1.0 is an unofficial free GitHub community release,
+  not an App Store or TestFlight build. Dedicated physical-iPhone coverage,
+  wider controller/interruption/thermal testing, full progression, and the
+  decompilation/translated-code rights question remain documented work.
+- **Exact artifact:** two independent packages were byte-identical. The
+  7,699,951-byte `SnapPad-v0.1.0-unsigned.ipa` has SHA-256
+  `37741aebff29f05263cee6a7fb146b3f76c5c75c30ccd958caeb34e5a06590df`,
+  contains version `0.1.0` build `1`, 54 dependency notice files, no signature
+  or provisioning profile, and no ROM, save, generated input, credential, or
+  private path.

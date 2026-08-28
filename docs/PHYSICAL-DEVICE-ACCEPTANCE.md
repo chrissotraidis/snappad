@@ -15,6 +15,20 @@ Do not uninstall SnapPad from a device that contains its private ROM, settings,
 or save. The deployment helper performs an in-place install and never removes
 the application container.
 
+Before every later physical-device update, copy these paths from the existing
+`com.chrissotraidis.snappad` app data container into an ignored
+`artifacts/device-backups/` directory:
+
+- `Library/Application Support/SnapPad`
+- `Library/Preferences/com.chrissotraidis.snappad.plist`
+- `Documents`, when present
+
+Record hashes for the ROM, preferences, and save payloads before installation,
+install in place, then read them back and compare. Logs and active-session
+markers can change normally and are not preservation hashes. Never use
+`--remove-existing-content`, change the bundle identifier, or uninstall the
+accepted app unless an explicit reset has been authorized.
+
 ## Build, audit, install, and launch
 
 ```sh
@@ -51,6 +65,19 @@ Run Original (4:3) first on one device at a time:
 Record the device model, OS version, source revision, executable SHA-256,
 signing team/profile identity, start/end time, settings, and any defect. Export
 SnapPad diagnostics only after reviewing the privacy-bounded text.
+
+## Current physical baseline
+
+On 2026-08-28, the current signed candidate was installed for the first time on
+an iPad Pro 12.9-inch (6th generation) running iPadOS 26.6. The normalized ROM
+was written to the new private container with owner-only permissions and read
+back with the locked Pokémon Snap US SHA-1. SnapPad remained running; its local
+log confirmed the registered game core, a native 2732×2048 Metal drawable, the
+verified audio RSP path, and live touch input.
+
+The initial private Application Support and preferences baseline is retained
+under ignored `artifacts/device-backups/2026-08-28-initial/`. This is deployment
+and early runtime evidence, not completion of the hands-on checklist above.
 
 ## Experimental widescreen pass
 

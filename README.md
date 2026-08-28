@@ -1,30 +1,62 @@
 # SnapPad
 
 <p align="center">
-  <img src="docs/images/snappad-ipad-shell-first-run.png" width="680" alt="SnapPad private ROM setup on iPad">
+  <img src="port/apple/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png" width="168" alt="SnapPad app icon">
 </p>
 
 <p align="center">
-  <strong>Pokémon Snap, statically recompiled for Apple Silicon.</strong><br>
-  Native Metal rendering, customizable iPhone and iPad controls, controller support, and private ROM import.
+  <strong>Pokémon Snap, statically recompiled for iPhone, iPad, and Apple Silicon Mac.</strong><br>
+  Native Metal rendering, customizable touch controls, controller support, and private ROM setup.
 </p>
 
 <p align="center">
   <img alt="iOS and iPadOS 15 or newer" src="https://img.shields.io/badge/iOS%20%2F%20iPadOS-15%2B-0A84FF?logo=apple">
   <img alt="Apple Silicon macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-0A84FF?logo=apple">
   <img alt="Metal renderer" src="https://img.shields.io/badge/renderer-Metal-5E5CE6">
-  <img alt="Private development build" src="https://img.shields.io/badge/status-private%20development-FF9F0A">
+  <img alt="SnapPad 0.1.0 release" src="https://img.shields.io/badge/release-v0.1.0-34C759">
   <img alt="Game data not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
 </p>
 
-SnapPad combines the matching [Pokémon Snap decompilation](https://github.com/ethteck/pokemonsnap) with N64Recomp, N64ModernRuntime, RSPRecomp, and RT64's Metal renderer. It adds a native Apple application shell, ahead-of-time ARM64 game code, keyboard and controller input, customizable touch controls, native settings, and private first-run ROM import.
+![Pokémon Snap running in SnapPad on a physical iPad Pro](docs/images/snappad-ipad-title-screen.png)
 
-SnapPad is a game-specific static recompile, not a general Nintendo 64 emulator. It supports only an unmodified **Pokémon Snap (USA)** ROM supplied by the user.
+<p align="center">
+  <strong><a href="https://github.com/chrissotraidis/snappad/releases/download/v0.1.0/SnapPad-v0.1.0-unsigned.ipa">Download SnapPad v0.1.0 for iPhone and iPad</a></strong><br>
+  Unsigned, ROM-free IPA. Re-sign it with AltStore Classic or another compatible sideloading tool.
+</p>
+
+SnapPad turns your legally obtained, unmodified **Pokémon Snap (USA)** ROM into a game-specific native Apple app. It runs ahead-of-time ARM64 game code through Metal and includes complete touch controls, controller support, persistent saves, native settings, and a private Files-based setup flow.
+
+Under the hood, SnapPad combines the matching [Pokémon Snap decompilation](https://github.com/ethteck/pokemonsnap) with N64Recomp, N64ModernRuntime, RSPRecomp, and RT64. It is a game-specific static recompile, not a general Nintendo 64 emulator.
 
 This repository contains integration source, patches, scripts, and documentation. It does **not** contain Pokémon Snap, a ROM, extracted Nintendo assets, generated playable game code, saves, in-game photographs, or a playable ROM-derived archive.
 
 > [!IMPORTANT]
-> SnapPad is playable today as a **private development build**, but it is not a public release. Physical-device signing and hands-on acceptance, full-game compatibility, mobile soak coverage, and rights clearance remain open. There is no authorized IPA, TestFlight build, App Store release, or signed download.
+> The GitHub release is an **unsigned, ROM-free IPA**. It is not an App Store or TestFlight build and will not install until a sideloading tool re-signs it. You must supply your own legally obtained, unmodified Pokémon Snap (USA) ROM. SnapPad does not need JIT and never downloads game data.
+
+What is already here:
+
+- a native, JIT-free ARM64 app for iOS, iPadOS, and Apple Silicon macOS;
+- a complete N64 touch layout with separate phone and tablet customization;
+- private ROM validation and storage with no bundled or downloaded game data;
+- Metal rendering, FlashRAM saves, controller input, diagnostics, and package-safety audits; and
+- reproducible scripts that keep ROMs, generated game code, saves, and signing material out of the repository.
+
+## Install status
+
+| Option | Status | What to do |
+|---|---|---|
+| GitHub `.ipa` | **Available: v0.1.0** | Download the unsigned ROM-free IPA, re-sign it with AltStore Classic or an equivalent tool, then select your own supported ROM. |
+| Local iPhone or iPad build | **Available** | Build the ROM-free app from source, sign it with your own Apple Development team, and supply your own supported ROM after installation. |
+| iPhone or iPad Simulator | **Available now** | Follow the build steps below. Simulator is suitable for development and UI/runtime testing, not a substitute for physical-device acceptance. |
+| Apple Silicon macOS | **Available now** | Build locally from source and supply your own supported ROM. There is no signed or notarized public download. |
+| TestFlight / App Store | **Not available** | The first release is distributed only as an unsigned GitHub IPA. |
+
+On 28 August 2026, the release candidate passed its ROM-free bundle audit and
+ran on a physical 12.9-inch iPad Pro with iPadOS 26.6. The supported ROM was
+recognized from private app storage, Metal created the native Retina drawable,
+audio started through the verified RSP path, and live touch input was observed.
+The same candidate also passed the first-run, settings, lifecycle, and gameplay
+flows on current iPhone and iPad Simulators.
 
 ## Current status
 
@@ -35,8 +67,9 @@ The same statically recompiled core now runs on macOS, iPadOS, and iOS. Progress
 | Apple Silicon macOS | Current desktop product boundary accepted: native first-play photograph/scoring loop, FlashRAM save/reload, measured cadence, clean exit, and 60-minute transition soak |
 | iPad Simulator | PaperPad-derived layout, native two-finger viewfinder/shutter, first-play flow, save, termination, and Continue reload accepted |
 | iPhone Simulator | Compact touch layout, per-control gameplay input, native settings/reset, fresh title/name/Oak flow, cross-device save, cadence, and background/foreground audio accepted |
-| Physical iPhone and iPad | ARM64 `iphoneos` bundle builds and passes its package audit; signing and hands-on device acceptance remain open |
-| Public binary distribution | **Not authorized**; source rights and exact release evidence remain unresolved |
+| Physical iPad | Current signed development build accepted as stable by the maintainer on a 12.9-inch iPad Pro running iPadOS 26.6 |
+| Physical iPhone | ARM64 device build and shared mobile input path are available; dedicated hands-on iPhone acceptance remains limited |
+| Public binary distribution | **v0.1.0 available** as an audited unsigned, ROM-free GitHub IPA |
 
 The current mobile build fixes phone-specific input/lifecycle defects discovered during acceptance: quick analog flicks are retained across one complete game update, backgrounding suspends and clears queued audio before a clean foreground resume, and A/Start taps are emitted as single action edges so one touch produces one menu or name-entry action while the other controls retain true hold behavior.
 
@@ -55,9 +88,24 @@ Physical-device work can continue on a signing-capable Mac using the
 
 SnapPad accepts `.z64`, `.v64`, and `.n64` byte orders, normalizes an ignored local working copy to big-endian, and rejects every other fingerprint. This fingerprint verifies compatibility; it is not a download hint.
 
-## Developer setup
+## Install on iPhone or iPad
 
-### Requirements
+SnapPad v0.1.0 supports iOS and iPadOS 15 or newer. The published IPA is
+unsigned, so it must be re-signed before installation.
+
+1. [Download `SnapPad-v0.1.0-unsigned.ipa`](https://github.com/chrissotraidis/snappad/releases/download/v0.1.0/SnapPad-v0.1.0-unsigned.ipa).
+2. Install it with **AltStore Classic plus AltServer**, or another sideloading
+   tool that can sign an unsigned IPA. AltStore PAL cannot import arbitrary
+   unsigned IPA files.
+3. Launch SnapPad and choose your own supported Pokémon Snap ROM through Files.
+
+See the [complete IPA installation and update guide](docs/INSTALL_IPA.md),
+including Developer Mode, free-account refresh limits, and preserving your ROM,
+saves, and settings during updates.
+
+## Build from source
+
+### What you need
 
 - Apple Silicon Mac
 - Xcode 26.x with the macOS and iOS SDKs and downloadable Metal Toolchain
@@ -69,6 +117,9 @@ SnapPad accepts `.z64`, `.v64`, and `.n64` byte orders, normalizes an ignored lo
 Verify the host and fetch the pinned ROM-free source inputs:
 
 ```sh
+git clone https://github.com/chrissotraidis/snappad.git
+cd snappad
+
 scripts/check-prerequisites.sh
 scripts/clone-sources.sh
 scripts/verify-sources.sh
@@ -105,6 +156,10 @@ xcrun simctl launch booted com.chrissotraidis.snappad
 
 On first launch, select the ROM through the native Files picker. SnapPad validates the exact revision, normalizes its byte order, and stores the private copy inside that app container. The installed `.app` remains ROM-free.
 
+SnapPad supports landscape only. If iOS 26 Simulator initially leaves its
+device frame in portrait, use Simulator's Rotate control once; this is a host
+presentation quirk rather than a portrait gameplay mode.
+
 Shut down the active Simulator before changing device classes:
 
 ```sh
@@ -140,6 +195,10 @@ SnapPad never downloads game data.
 5. Start with the on-screen Start button, keyboard, or connected controller.
 
 Use **SnapPad Menu → Settings → Manage Game ROM** to replace or remove the private copy later. ROM and save contents are never included in shared diagnostics.
+
+Cancelling Files now returns to the setup screen with a clear message and a
+working **Choose ROM** button. It does not close SnapPad or strand the first-run
+flow.
 
 ## Touch controls and settings
 
@@ -213,10 +272,13 @@ See [Performance evidence](docs/PERF.md) and [Current status](docs/STATUS.md) fo
 - Scene ambience, every cry/UI/shutter effect, pitch, interruption behavior, and long-run audio quality are not comprehensively verified.
 - A visible opening terrain seam remains a renderer-correctness issue.
 - Controller handoff, system-audio interruption, exact phone grip feel, and physical-device simultaneous touch still need hands-on acceptance. Native iPad two-finger shutter input, phone per-control input, phone settings, diagnostics export, installed-ROM management, same-ROM replacement, and cold relaunch are accepted at Simulator scope.
-- A 60-minute mobile soak with mobile memory-growth measurement, broader
-  transition stress, and a signed physical-device run remain open. A native
-  macOS hour-long transition soak is complete.
-- Public distribution requires explicit rights clearance in addition to technical readiness.
+- A 60-minute mobile soak with mobile memory-growth measurement and broader
+  transition stress remain open. A native macOS hour-long transition soak and
+  a signed physical-iPad run are complete.
+- The Pokémon Snap decompilation and translated-code rights boundary remains
+  legally unresolved; the maintainer has authorized this free source snapshot
+  and unsigned ROM-free community release, not commercial or official-store
+  distribution.
 
 ## Diagnostics and bug reports
 
@@ -269,13 +331,13 @@ No. You must provide your own legally obtained, unmodified Pokémon Snap (USA) R
 <details>
 <summary><strong>Is there an IPA, TestFlight, or App Store build?</strong></summary>
 
-No public package is authorized. SnapPad builds audited private Simulator and `iphoneos` application bundles, but the device bundle must be signed locally with an Apple Development team before installation. It is a development artifact, not an authorized IPA, TestFlight, or App Store release.
+Yes. The GitHub release provides an audited, unsigned, ROM-free IPA for iOS and iPadOS 15 or newer. AltStore Classic plus AltServer, or another compatible tool, must re-sign it before installation. There is no TestFlight or App Store build.
 </details>
 
 <details>
 <summary><strong>Is the game playable?</strong></summary>
 
-Yes, as a private development build. The exact generated core completes the macOS first-play loop, runs title/name/Oak/Beach/photo/save/reload on iPad Simulator, and runs the fresh name/Oak plus live Beach path on iPhone Simulator. Full-game, long-stability, signed physical-device, and public-release acceptance remain open.
+Yes. The same AOT core completes the macOS first-play loop, runs the accepted mobile gameplay flow, and has been played on a physical iPad Pro. Broader full-game progression, long mobile soaks, and dedicated physical-iPhone coverage remain ongoing compatibility work.
 </details>
 
 <details>
@@ -333,4 +395,4 @@ Its Apple shell, touch layout, persistent menu, modal input lifecycle, controlle
 
 SnapPad is an independent, unofficial project and is not affiliated with, endorsed by, or sponsored by Nintendo, The Pokémon Company, or their partners. Pokémon Snap and related names, characters, copyrights, and trademarks belong to their respective owners.
 
-The pinned Pokémon Snap decompilation has no general root license. A ROM-free package does not by itself establish redistribution permission, and static recompilation may still embody translated game logic. Private technical work can proceed under Chris's direction; publication requires explicit technical, package, physical-device, and rights approval recorded in [Release readiness](docs/RELEASE-READINESS.md). This document is not legal advice.
+The pinned Pokémon Snap decompilation has no general root license. A ROM-free package does not by itself establish redistribution permission, and static recompilation may still embody translated game logic. The maintainer explicitly authorized the free v0.1.0 source snapshot and unsigned ROM-free IPA on 28 August 2026; that decision does not grant rights in upstream code or Nintendo material and is not legal advice. See [Rights and licenses](RIGHTS_AND_LICENSES.md) and [Release readiness](docs/RELEASE-READINESS.md).

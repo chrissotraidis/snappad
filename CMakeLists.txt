@@ -14,9 +14,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum iOS version" FORCE)
 endif()
 
-set(SNAPPAD_VERSION "0.0.1")
+set(SNAPPAD_VERSION "0.1.0")
 set(SNAPPAD_BUILD_NUMBER "1")
-set(SNAPPAD_BUILD_PROFILE "private-bringup")
+set(SNAPPAD_BUILD_PROFILE "community-release")
 set(DEVELOPMENT_TEAM "" CACHE STRING
     "Apple development team used for signed iPhoneOS builds")
 set(SNAPPAD_GENERATED_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/generated" CACHE PATH
@@ -412,8 +412,11 @@ if(SNAPPAD_BUILD_NATIVE_APP)
             port/apple/ios_main.mm
             port/apple/rom_setup.mm
             port/apple/diagnostics.mm
-            port/apple/PrivacyInfo.xcprivacy)
-        set_source_files_properties(port/apple/PrivacyInfo.xcprivacy
+            port/apple/PrivacyInfo.xcprivacy
+            port/apple/Assets.xcassets)
+        set_source_files_properties(
+            port/apple/PrivacyInfo.xcprivacy
+            port/apple/Assets.xcassets
             PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
         target_link_libraries(SnapPad PRIVATE
             SDL2::SDL2main SDL2::SDL2-static
@@ -430,6 +433,7 @@ if(SNAPPAD_BUILD_NATIVE_APP)
             XCODE_ATTRIBUTE_CODE_SIGN_STYLE Automatic
             XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${DEVELOPMENT_TEAM}"
             XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.chrissotraidis.snappad"
+            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
             # Native iPhone + iPad support, matching PaperPad rather than
             # forcing an iPhone compatibility window on iPadOS.
             XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2")
@@ -458,8 +462,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS" AND SNAPPAD_BUILD_SHELL_PREVIEW)
         port/apple/diagnostics.mm
         port/apple/snappad_paths.mm
         port/apple/PrivacyInfo.xcprivacy
+        port/apple/Assets.xcassets
         port/runtime/shell_preview_stubs.cpp)
-    set_source_files_properties(port/apple/PrivacyInfo.xcprivacy
+    set_source_files_properties(
+        port/apple/PrivacyInfo.xcprivacy
+        port/apple/Assets.xcassets
         PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     target_include_directories(SnapPadShell PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/port/apple"
@@ -479,5 +486,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS" AND SNAPPAD_BUILD_SHELL_PREVIEW)
         XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
         XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.chrissotraidis.snappad"
+        XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
         XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2")
 endif()

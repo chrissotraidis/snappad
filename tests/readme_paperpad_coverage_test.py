@@ -12,7 +12,8 @@ def main() -> None:
     required = {
         "status boundary": "## Current status",
         "supported input": "## Supported game input",
-        "developer path": "## Developer setup",
+        "install path": "## Install on iPhone or iPad",
+        "developer path": "## Build from source",
         "first launch": "## First launch",
         "touch/settings": "## Touch controls and settings",
         "bindings": "### Keyboard and controller bindings",
@@ -25,7 +26,7 @@ def main() -> None:
     for label, marker in required.items():
         if marker not in readme:
             raise SystemExit(f"README lost PaperPad-derived {label}: {marker}")
-    for boundary in ("private development build", "never downloads game data", "one Simulator"):
+    for boundary in ("unsigned, ROM-free IPA", "never downloads game data", "one Simulator"):
         if boundary not in readme:
             raise SystemExit(f"README lost honest boundary: {boundary}")
     print("readme_paperpad_coverage_test: applicable PaperPad README structure retained")

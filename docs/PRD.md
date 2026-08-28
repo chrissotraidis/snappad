@@ -6,6 +6,13 @@ Companion document: `docs/GOAL-LOOP.md` (the operating loop). Read both before d
 
 Decision: **GO for a private technical porting program. NO-GO for a public release until the technical, physical-device, package-safety, and rights gates in this document are all satisfied.**
 
+> **Release decision update — 28 August 2026:** Chris accepted the current
+> physical-iPad build as stable and explicitly authorized a free v0.1.0
+> integration-source snapshot and unsigned ROM-free IPA. The detailed gates
+> below remain the original engineering target and define known post-release
+> work; this override does not claim upstream legal clearance or authorize
+> commercial, TestFlight, App Store, or official-store distribution.
+
 ---
 
 ## 1. Objective

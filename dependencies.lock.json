@@ -4,7 +4,7 @@
   "notes": [
     "SnapPad is a separate integration repository. The Pokemon Snap decomp remains an ignored, pinned local build input.",
     "PaperPad is a read-only implementation reference. ReCut vendors N64ModernRuntime, N64Recomp, RSPRecomp, and RT64.",
-    "All source checkouts have push disabled. Public redistribution remains blocked by docs/RIGHTS-STATUS.md."
+    "All source checkouts have push disabled. Public distribution follows the scoped decision and unresolved-rights boundary in docs/RIGHTS-STATUS.md."
   ],
   "sources": {
     "pokemonSnap": {

@@ -1,9 +1,9 @@
 # SnapPad goal-based loop
 
-Operating loop for bringing SnapPad to a private, native Apple-platform
-candidate. `docs/PRD.md` remains the long-term requirements source; this file
-defines current execution priority. Reoriented 28 Aug 2026 after desktop
-product acceptance.
+Operating loop for maintaining SnapPad as a native Apple-platform product.
+`docs/PRD.md` remains the long-term requirements source; this file defines
+current execution priority. Reoriented 28 Aug 2026 after the maintainer
+accepted the physical-iPad build and authorized v0.1.0.
 
 ## Product boundary
 
@@ -72,16 +72,17 @@ lifecycle, cadence, and audited-bundle evidence exists from the same candidate
 revision. Exact phone grip feel and physical-device performance belong to P3;
 Simulator evidence must not be presented as either.
 
-### P3 — Physical candidate: externally gated
+### P3 — Physical candidate: accepted for v0.1.0 iPad scope
 
-- Build and sign the exact candidate with an Apple Development identity.
-- Chris performs hands-on iPad and iPhone acceptance for touch feel, audio,
-  sustained gameplay, suspend/resume, controller handoff, save/reload, and
-  thermal/frame pacing.
-- Record artifact hashes and device/OS identities. Do not infer this phase from
-  Simulator results.
+- The signed candidate ran on a physical 12.9-inch iPad Pro with iPadOS 26.6;
+  the supported ROM, native Metal/audio paths, and live touch input were
+  observed, and Chris accepted the build as stable.
+- Dedicated physical-iPhone coverage plus the wider controller, interruption,
+  long-soak, and thermal matrix remains post-release compatibility work.
+- Preserve the accepted iPad container and its ROM, saves, and preferences on
+  every later in-place update.
 
-### P4 — Complete-game compatibility: required before technical release
+### P4 — Complete-game compatibility: post-release work
 
 - Finish the fresh-save route through every course, Rainbow Cloud, and credits.
 - Cover item/course unlocks, Report, Album, Gallery, later-course interactions,
@@ -89,11 +90,16 @@ Simulator evidence must not be presented as either.
 - Use deterministic stock events when automation is needed. Stop after one
   bounded miss; do not turn report collection into the default work loop.
 
-### P5 — Public release: authorization required
+### P5 — v0.1.0 community release: authorized
 
-- Resolve repository and dependency rights, notices, source/package safety,
-  exact-artifact testing, and Chris's explicit approval.
-- `private-only` permits P0–P4 and blocks publication. Never publish by momentum.
+- Chris explicitly authorized the free v0.1.0 integration-source snapshot and
+  unsigned ROM-free IPA on 28 August 2026.
+- Package and repository audits, dependency notices, exact-artifact testing,
+  hosted-download verification, and honest unsigned-IPA instructions remain
+  mandatory for the authorized release.
+- Upstream and translated-code rights remain unresolved; the authorization
+  does not extend to paid, commercial, TestFlight, App Store, or official-store
+  distribution.
 
 ## The operating loop
 
@@ -137,7 +143,7 @@ Simulator evidence must not be presented as either.
 
 ## Active next action
 
-Preserve P2 and the current ARM64 device candidate, push the reproducible
-handoff, then continue P3 on the signing-capable Mac with one physical iPhone or
-iPad. Run Original first; evaluate Wide only afterward as a default-off
-enhancement. Do not return to report collection while the device handoff moves.
+Publish and independently verify v0.1.0, preserve the accepted physical-iPad
+container, then continue bounded physical-iPhone and broader compatibility
+work. Run Original first; evaluate Wide only afterward as a default-off
+enhancement.
