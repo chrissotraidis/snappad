@@ -2,8 +2,8 @@
 
 Operating loop for maintaining SnapPad as a native Apple-platform product.
 `docs/PRD.md` remains the long-term requirements source; this file defines
-current execution priority. Reoriented 28 Aug 2026 after the maintainer
-accepted the physical-iPad build and authorized v0.1.0.
+current execution priority. Reoriented 31 Aug 2026 after the maintainer
+accepted the gyro-enabled physical-iPad build and authorized Preview 2.
 
 ## Product boundary
 
@@ -72,11 +72,15 @@ lifecycle, cadence, and audited-bundle evidence exists from the same candidate
 revision. Exact phone grip feel and physical-device performance belong to P3;
 Simulator evidence must not be presented as either.
 
-### P3 — Physical candidate: accepted for v0.1.0 iPad scope
+### P3 — Physical candidate: accepted for Preview 2 iPad scope
 
 - The signed candidate ran on a physical 12.9-inch iPad Pro with iPadOS 26.6;
   the supported ROM, native Metal/audio paths, and live touch input were
   observed, and Chris accepted the build as stable.
+- The native gyro camera path was tuned and accepted hands-on with 190%
+  sensitivity, horizontal inversion off, and vertical inversion on. The
+  opt-in feature, in-game toggle, settings, and data-preserving update path are
+  part of the Preview 2 baseline.
 - Dedicated physical-iPhone coverage plus the wider controller, interruption,
   long-soak, and thermal matrix remains post-release compatibility work.
 - Preserve the accepted iPad container and its ROM, saves, and preferences on
@@ -90,10 +94,12 @@ Simulator evidence must not be presented as either.
 - Use deterministic stock events when automation is needed. Stop after one
   bounded miss; do not turn report collection into the default work loop.
 
-### P5 — v0.1.0 community release: authorized
+### P5 — Preview 2 community prerelease: authorized
 
 - Chris explicitly authorized the free v0.1.0 integration-source snapshot and
   unsigned ROM-free IPA on 28 August 2026.
+- Chris explicitly authorized the gyro-enabled Preview 2 source snapshot and
+  unsigned ROM-free IPA on 31 August 2026.
 - Package and repository audits, dependency notices, exact-artifact testing,
   hosted-download verification, and honest unsigned-IPA instructions remain
   mandatory for the authorized release.
@@ -143,7 +149,7 @@ Simulator evidence must not be presented as either.
 
 ## Active next action
 
-Publish and independently verify v0.1.0, preserve the accepted physical-iPad
+Publish and independently verify Preview 2, preserve the accepted physical-iPad
 container, then continue bounded physical-iPhone and broader compatibility
 work. Run Original first; evaluate Wide only afterward as a default-off
 enhancement.

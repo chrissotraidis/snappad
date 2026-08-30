@@ -1,10 +1,10 @@
 # SnapPad status
 
-Updated: 2026-08-28
+Updated: 2026-08-31
 
 ## Current gate
 
-**v0.1.0 accepted for a free unsigned community release; broader compatibility work continues.**
+**Preview 2 accepted for a free unsigned community prerelease; broader compatibility work continues.**
 
 The reproducible foundation and current macOS product boundary are accepted.
 The exact supported ROM rebuilds byte-for-byte, the CPU and audio RSP outputs
@@ -24,6 +24,13 @@ native Metal and verified audio paths, and recorded live touch input. The
 maintainer accepted that build as stable and authorized v0.1.0. Dedicated
 physical-iPhone, controller, interruption, sustained-cadence, and thermal
 coverage remains post-release compatibility work.
+
+On 31 August 2026, the maintainer accepted the native gyro camera controls on
+the same physical iPad and authorized Preview 2. Gyro remains opt-in through
+the three-dot menu, has a movable/resizable in-game on/off control, replaces
+the analog camera stick only while active, and exposes sensitivity plus
+independent axis inversion under SnapPad Settings. The accepted defaults are
+190% sensitivity, horizontal inversion off, and vertical inversion on.
 
 SnapPad now also offers **Wide (Experimental)** as a distinct, default-off
 graphics option. Unlike Fill Screen, it uses RT64's expanded projection. A
@@ -90,8 +97,8 @@ the physical handoff must treat Wide as an enhancement check, not baseline.
   1400-point report.
 - Local protected evidence is under `artifacts/2026-08-26/g5-macos/`, including
   the production reload report and natural Beach-to-Camera-Check transition.
-- The host CTest suite is 29/29 green. It covers input/accessory policy, touch
-  latching, address translation, SP integrity, libultra stubs, generation and
+- The host CTest suite is 31/31 green. It covers input/accessory and gyro policy,
+  touch latching, address translation, SP integrity, libultra stubs, generation and
   evidence gates, runtime patch contracts, PaperPad shell/runner derivation,
   packaging, crash capture, breadcrumbs, and decomp recovery tooling.
 - A single native macOS process completed a 60-minute stability soak with 14

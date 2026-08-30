@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cmath>
@@ -9,11 +10,13 @@
 
 #include <SDL.h>
 #include <TargetConditionals.h>
+#import <CoreMotion/CoreMotion.h>
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
 #include "rom_setup.h"
 #include "diagnostics.h"
+#include "gyro_input_policy.h"
 #include "touch_tap_latch.h"
 #include "snappad_input.h"
 
@@ -37,6 +40,11 @@ std::atomic<int32_t> g_touch_y{0};
 std::atomic<int32_t> g_touch_flick_x{0};
 std::atomic<int32_t> g_touch_flick_y{0};
 std::atomic<uint8_t> g_touch_flick_polls{0};
+std::atomic<int32_t> g_gyro_x{0};
+std::atomic<int32_t> g_gyro_y{0};
+std::atomic_bool g_gyro_input_active{false};
+std::atomic<uint64_t> g_gyro_generation{0};
+std::atomic<NSInteger> g_interface_orientation{UIInterfaceOrientationLandscapeLeft};
 
 // PaperPad's six-poll tap latch is too long for Pokémon Snap's name and menu
 // readers: one released A tap can span two updates and enter the same character
@@ -53,7 +61,7 @@ constexpr uint16_t kPulseButtonMask = 0x8000 | 0x1000;
 // without the repeated grid/name-entry movement caused by a longer replay.
 constexpr uint8_t kAnalogFlickHoldPolls = 2;
 
-enum class ControlKind { Stick, Button };
+enum class ControlKind { Stick, Button, GyroToggle };
 
 struct TouchControl {
     const char* key;
@@ -67,7 +75,7 @@ struct TouchControl {
     bool visible;
 };
 
-constexpr size_t kControlCount = 15;
+constexpr size_t kControlCount = 16;
 
 std::array<TouchControl, kControlCount> defaultControls() {
     // Adapt HarkinianPad's physically accepted grip-first phone/tablet layouts
@@ -90,6 +98,7 @@ std::array<TouchControl, kControlCount> defaultControls() {
             {"l", "L", ControlKind::Button, 0x0020, 0.941, 0.460, 0.041, 0.38, true},
             {"r", "R", ControlKind::Button, 0x0010, 0.941, 0.374, 0.041, 0.38, true},
             {"start", "START", ControlKind::Button, 0x1000, 0.942, 0.291, 0.033, 0.40, true},
+            {"gyro", "GYRO", ControlKind::GyroToggle, 0x0000, 0.735, 0.855, 0.040, 0.52, true},
         }};
     }
     // The phone radii normalize HarkinianPad's accepted 116-point stick,
@@ -116,6 +125,7 @@ std::array<TouchControl, kControlCount> defaultControls() {
         {"l", "L", ControlKind::Button, 0x0020, 0.945778, 0.188033, 0.0500, 0.36, true},
         {"r", "R", ControlKind::Button, 0x0010, 0.946222, 0.078515, 0.0500, 0.36, true},
         {"start", "START", ControlKind::Button, 0x1000, 0.873667, 0.068944, 0.0500, 0.54, true},
+        {"gyro", "GYRO", ControlKind::GyroToggle, 0x0000, 0.720000, 0.840000, 0.0550, 0.56, true},
     }};
 }
 
@@ -146,6 +156,31 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
     return MAX(0, MIN(2, aspect));
 }
 
+double gyroSensitivityFromSettings(NSDictionary* settings) {
+    double sensitivity = settings[@"gyroSensitivity"] == nil
+        ? snappad::kDefaultGyroSensitivity
+        : [settings[@"gyroSensitivity"] doubleValue];
+    if (!std::isfinite(sensitivity)) {
+        sensitivity = snappad::kDefaultGyroSensitivity;
+    }
+    return std::clamp(
+        sensitivity,
+        snappad::kMinimumGyroSensitivity,
+        snappad::kMaximumGyroSensitivity);
+}
+
+BOOL gyroInvertHorizontalFromSettings(NSDictionary* settings) {
+    return settings[@"gyroInvertHorizontal"] == nil
+        ? snappad::kDefaultGyroInvertHorizontal
+        : [settings[@"gyroInvertHorizontal"] boolValue];
+}
+
+BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
+    return settings[@"gyroInvertVertical"] == nil
+        ? snappad::kDefaultGyroInvertVertical
+        : [settings[@"gyroInvertVertical"] boolValue];
+}
+
 } // namespace
 
 @interface SnapPadTouchOverlayView : UIView
@@ -154,6 +189,10 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
 - (void)setGameplayControlsEnabled:(BOOL)enabled opacity:(CGFloat)opacity;
 - (void)setPhysicalControllerConnected:(BOOL)connected;
 - (void)setModalControlsHidden:(BOOL)hidden;
+- (void)setGyroFeatureEnabled:(BOOL)enabled;
+- (void)setGyroSensitivity:(double)sensitivity
+          invertHorizontal:(BOOL)invertHorizontal
+            invertVertical:(BOOL)invertVertical;
 @end
 
 @implementation SnapPadTouchOverlayView {
@@ -173,8 +212,15 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
     BOOL _gameplayControlsEnabled;
     BOOL _physicalControllerConnected;
     BOOL _modalControlsHidden;
+    BOOL _gyroFeatureEnabled;
+    BOOL _gyroActive;
+    double _gyroSensitivity;
+    BOOL _gyroInvertHorizontal;
+    BOOL _gyroInvertVertical;
     CGFloat _globalOpacity;
     UIButton* _utilityButton;
+    CMMotionManager* _motionManager;
+    NSOperationQueue* _motionQueue;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -188,6 +234,11 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
         _selected = 9;
         _gameplayControlsEnabled = YES;
         _globalOpacity = 0.70;
+        _gyroSensitivity = snappad::kDefaultGyroSensitivity;
+        _motionManager = [[CMMotionManager alloc] init];
+        _motionQueue = [[NSOperationQueue alloc] init];
+        _motionQueue.maxConcurrentOperationCount = 1;
+        _motionQueue.qualityOfService = NSQualityOfServiceUserInteractive;
         _utilityButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_utilityButton setTitle:@"\u2022\u2022\u2022" forState:UIControlStateNormal];
         _utilityButton.titleLabel.font = [UIFont boldSystemFontOfSize:16.0];
@@ -203,8 +254,13 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
         [self loadLayout];
         [[NSNotificationCenter defaultCenter]
             addObserver:self
-               selector:@selector(clearInput)
+               selector:@selector(appWillResignActive)
                    name:UIApplicationWillResignActiveNotification
+                 object:nil];
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(appDidBecomeActive)
+                   name:UIApplicationDidBecomeActiveNotification
                  object:nil];
     }
     return self;
@@ -213,9 +269,14 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
 - (void)layoutSubviews {
     [super layoutSubviews];
     _utilityButton.frame = [self utilityButtonRect];
+    UIInterfaceOrientation orientation = self.window.windowScene.interfaceOrientation;
+    if (UIInterfaceOrientationIsLandscape(orientation)) {
+        g_interface_orientation.store(orientation, std::memory_order_relaxed);
+    }
 }
 
 - (void)dealloc {
+    [_motionManager stopDeviceMotionUpdates];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 #if !__has_feature(objc_arc)
     [super dealloc];
@@ -240,6 +301,14 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
 
 - (BOOL)isShoulderControl:(const TouchControl&)control {
     return std::strcmp(control.key, "l") == 0 || std::strcmp(control.key, "r") == 0;
+}
+
+- (BOOL)isGyroControl:(const TouchControl&)control {
+    return control.kind == ControlKind::GyroToggle;
+}
+
+- (BOOL)isWideControl:(const TouchControl&)control {
+    return [self isShoulderControl:control] || [self isGyroControl:control];
 }
 
 - (BOOL)isDirectionalControl:(const TouchControl&)control {
@@ -282,13 +351,16 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
     if (std::strcmp(control.key, "start") == 0) {
         return [UIColor colorWithRed:0.78 green:0.10 blue:0.12 alpha:1.0];
     }
+    if ([self isGyroControl:control]) {
+        return _gyroActive ? UIColor.systemTealColor : UIColor.systemGrayColor;
+    }
     return nil;
 }
 
 - (CGPoint)centerForControl:(const TouchControl&)control {
     CGRect usable = [self usableBounds];
     CGFloat radius = control.size * [self baseDimension];
-    CGFloat halfWidth = [self isShoulderControl:control] ? radius * 1.65 : radius;
+    CGFloat halfWidth = [self isWideControl:control] ? radius * 1.65 : radius;
     CGFloat x = CGRectGetMinX(usable) + control.x * usable.size.width;
     CGFloat y = CGRectGetMinY(usable) + control.y * usable.size.height;
     x = MAX(CGRectGetMinX(usable) + halfWidth, MIN(CGRectGetMaxX(usable) - halfWidth, x));
@@ -303,7 +375,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
 - (CGRect)frameForControl:(const TouchControl&)control {
     CGPoint center = [self centerForControl:control];
     CGFloat radius = [self radiusForControl:control];
-    CGFloat halfWidth = [self isShoulderControl:control] ? radius * 1.65 : radius;
+    CGFloat halfWidth = [self isWideControl:control] ? radius * 1.65 : radius;
     return CGRectMake(center.x - halfWidth, center.y - radius,
                       halfWidth * 2.0, radius * 2.0);
 }
@@ -356,7 +428,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
 - (NSArray<NSString*>*)toolbarLabels {
     BOOL hasSelection = _selected >= 0 && _selected < (NSInteger)kControlCount;
     BOOL selectedVisible = hasSelection ? _controls[_selected].visible : YES;
-    BOOL selectedHideable = hasSelection && _controls[_selected].kind != ControlKind::Stick;
+    BOOL selectedHideable = hasSelection && _controls[_selected].kind == ControlKind::Button;
     NSString* linkLabel = !hasSelection || ![self isDirectionalControl:_controls[_selected]]
         ? @"SINGLE" : ([self isSelectedDirectionalGroupLinked] ? @"UNLINK" : @"LINK");
     return @[@"DONE", _hasUndo ? @"UNDO" : @"RESET", linkLabel, @"\u2212", @"+", @"FADE",
@@ -405,13 +477,15 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
 
     for (NSInteger index = 0; index < (NSInteger)kControlCount; ++index) {
         const TouchControl& control = _controls[index];
+        if ([self isGyroControl:control] && !_gyroFeatureEnabled) continue;
+        if (!_editing && control.kind == ControlKind::Stick && _gyroActive) continue;
         if (!_editing && (!_gameplayControlsEnabled || _physicalControllerConnected ||
                           _modalControlsHidden)) continue;
         if (!control.visible && !_editing) continue;
         CGPoint center = [self centerForControl:control];
         CGFloat radius = [self radiusForControl:control];
         CGRect controlFrame = [self frameForControl:control];
-        UIBezierPath* controlPath = [self isShoulderControl:control]
+        UIBezierPath* controlPath = [self isWideControl:control]
             ? [UIBezierPath bezierPathWithRoundedRect:controlFrame cornerRadius:radius]
             : [UIBezierPath bezierPathWithOvalInRect:controlFrame];
         CGFloat alpha = _editing
@@ -424,6 +498,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
                 break;
             }
         }
+        if ([self isGyroControl:control] && _gyroActive) pressed = YES;
         UIColor* accent = [self accentColorForControl:control];
         UIColor* fill = accent != nil
             ? [accent colorWithAlphaComponent:pressed ? MIN(0.92, alpha + 0.24) : alpha]
@@ -455,7 +530,11 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
             CGFloat labelScale = [self isDirectionalControl:control] ? 0.72 : 0.66;
             if (std::strcmp(control.key, "start") == 0) labelScale = 0.34;
             if ([self isShoulderControl:control]) labelScale = 0.56;
-            [self drawLabel:[NSString stringWithUTF8String:control.label] inRect:controlFrame
+            if ([self isGyroControl:control]) labelScale = 0.34;
+            NSString* label = [self isGyroControl:control]
+                ? (_gyroActive ? @"GYRO ON" : @"GYRO OFF")
+                : [NSString stringWithUTF8String:control.label];
+            [self drawLabel:label inRect:controlFrame
                       color:[UIColor colorWithWhite:1.0 alpha:0.92]
                        size:MAX(11.0, radius * labelScale)];
         }
@@ -496,11 +575,13 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
     CGFloat nearestDistance = CGFLOAT_MAX;
     for (NSInteger index = 0; index < (NSInteger)kControlCount; ++index) {
         const TouchControl& control = _controls[index];
+        if ([self isGyroControl:control] && !_gyroFeatureEnabled) continue;
+        if (!_editing && control.kind == ControlKind::Stick && _gyroActive) continue;
         if (!control.visible && !includeHidden) continue;
         CGPoint center = [self centerForControl:control];
         CGFloat distance = hypot(point.x - center.x, point.y - center.y);
         CGFloat radius = [self radiusForControl:control];
-        BOOL inside = [self isShoulderControl:control]
+        BOOL inside = [self isWideControl:control]
             ? CGRectContainsPoint(CGRectInset([self frameForControl:control], -radius * 0.12, -radius * 0.12), point)
             : distance <= radius * 1.12;
         if (inside && distance < nearestDistance) {
@@ -509,6 +590,96 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
         }
     }
     return nearest;
+}
+
+- (void)stopGyroMotion {
+    g_gyro_generation.fetch_add(1, std::memory_order_acq_rel);
+    [_motionManager stopDeviceMotionUpdates];
+    g_gyro_input_active.store(false, std::memory_order_release);
+    g_gyro_x.store(0, std::memory_order_relaxed);
+    g_gyro_y.store(0, std::memory_order_relaxed);
+}
+
+- (void)updateGyroMotionState {
+    const BOOL shouldRun = _gyroFeatureEnabled && _gyroActive &&
+        _gameplayControlsEnabled && !_physicalControllerConnected &&
+        !_modalControlsHidden && !_editing &&
+        UIApplication.sharedApplication.applicationState == UIApplicationStateActive &&
+        _motionManager.deviceMotionAvailable;
+    if (!shouldRun) {
+        [self stopGyroMotion];
+        return;
+    }
+    if (_motionManager.deviceMotionActive) return;
+
+    _motionManager.deviceMotionUpdateInterval = 1.0 / 60.0;
+    const uint64_t generation =
+        g_gyro_generation.fetch_add(1, std::memory_order_acq_rel) + 1;
+    g_gyro_x.store(0, std::memory_order_relaxed);
+    g_gyro_y.store(0, std::memory_order_relaxed);
+    g_gyro_input_active.store(true, std::memory_order_release);
+    __block double filteredX = 0.0;
+    __block double filteredY = 0.0;
+    const double sensitivity = _gyroSensitivity;
+    const BOOL invertHorizontal = _gyroInvertHorizontal;
+    const BOOL invertVertical = _gyroInvertVertical;
+    [_motionManager startDeviceMotionUpdatesToQueue:_motionQueue
+                                       withHandler:^(CMDeviceMotion* motion, NSError* error) {
+        if (error != nil || motion == nil ||
+            !g_gyro_input_active.load(std::memory_order_acquire) ||
+            g_gyro_generation.load(std::memory_order_acquire) != generation) return;
+        const NSInteger orientation =
+            g_interface_orientation.load(std::memory_order_relaxed);
+        const auto input = snappad::gyro_rotation_to_stick(
+            motion.rotationRate.x,
+            motion.rotationRate.y,
+            orientation == UIInterfaceOrientationLandscapeLeft,
+            sensitivity,
+            invertHorizontal,
+            invertVertical);
+        constexpr double kSmoothing = 0.25;
+        filteredX += (input.x - filteredX) * kSmoothing;
+        filteredY += (input.y - filteredY) * kSmoothing;
+        g_gyro_x.store(
+            static_cast<int32_t>(std::lround(filteredX * 10000.0)),
+            std::memory_order_relaxed);
+        g_gyro_y.store(
+            static_cast<int32_t>(std::lround(filteredY * 10000.0)),
+            std::memory_order_relaxed);
+    }];
+}
+
+- (void)setGyroFeatureEnabled:(BOOL)enabled {
+    _gyroFeatureEnabled = enabled;
+    if (!enabled) _gyroActive = NO;
+    [self updateGyroMotionState];
+    [self clearInput];
+    [self setNeedsDisplay];
+}
+
+- (void)setGyroSensitivity:(double)sensitivity
+          invertHorizontal:(BOOL)invertHorizontal
+            invertVertical:(BOOL)invertVertical {
+    if (!std::isfinite(sensitivity)) {
+        sensitivity = snappad::kDefaultGyroSensitivity;
+    }
+    _gyroSensitivity = std::clamp(
+        sensitivity,
+        snappad::kMinimumGyroSensitivity,
+        snappad::kMaximumGyroSensitivity);
+    _gyroInvertHorizontal = invertHorizontal;
+    _gyroInvertVertical = invertVertical;
+    [self stopGyroMotion];
+    [self updateGyroMotionState];
+}
+
+- (void)appWillResignActive {
+    [self clearInput];
+    [self stopGyroMotion];
+}
+
+- (void)appDidBecomeActive {
+    [self updateGyroMotionState];
 }
 
 - (void)presentUtilityMenu {
@@ -545,6 +716,23 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
             }
         });
     }]];
+    NSString* gyroTitle = !_motionManager.deviceMotionAvailable
+        ? @"Gyro Unavailable"
+        : (_gyroFeatureEnabled ? @"Disable Gyro Controls" : @"Enable Gyro Controls");
+    UIAlertAction* gyroAction = [UIAlertAction actionWithTitle:gyroTitle
+                                                        style:UIAlertActionStyleDefault
+                                                      handler:^(__unused UIAlertAction* action) {
+        const BOOL enabled = !self->_gyroFeatureEnabled;
+        NSMutableDictionary* saved = [[NSUserDefaults.standardUserDefaults
+            dictionaryForKey:settingsDefaultsKey()] mutableCopy];
+        if (saved == nil) saved = [NSMutableDictionary dictionary];
+        saved[@"gyroControls"] = @(enabled);
+        [NSUserDefaults.standardUserDefaults setObject:saved forKey:settingsDefaultsKey()];
+        [self setGyroFeatureEnabled:enabled];
+        [self setModalControlsHidden:NO];
+    }];
+    gyroAction.enabled = _motionManager.deviceMotionAvailable;
+    [menu addAction:gyroAction];
     [menu addAction:[UIAlertAction actionWithTitle:@"Share Diagnostics & Logs…"
                                              style:UIAlertActionStyleDefault
                                            handler:^(__unused UIAlertAction* action) {
@@ -582,6 +770,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
     _editing = YES;
     _utilityButton.hidden = YES;
     [self clearInput];
+    [self updateGyroMotionState];
     [self setNeedsDisplay];
 }
 
@@ -596,6 +785,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
     _editing = NO;
     _utilityButton.hidden = NO;
     [self saveLayout];
+    [self updateGyroMotionState];
     [self setNeedsDisplay];
 }
 
@@ -603,6 +793,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
     _modalControlsHidden = hidden;
     _utilityButton.hidden = hidden || _editing;
     if (hidden) [self clearInput];
+    [self updateGyroMotionState];
     [self setNeedsDisplay];
 }
 
@@ -623,6 +814,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
                 _utilityButton.hidden = NO;
                 _hasUndo = NO;
                 [self saveLayout];
+                [self updateGyroMotionState];
                 break;
             case 1:
                 if (_hasUndo) {
@@ -673,7 +865,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
                 [self saveLayout];
                 break;
             case 6:
-                if (selected.kind != ControlKind::Stick) {
+                if (selected.kind == ControlKind::Button) {
                     selected.visible = !selected.visible;
                 }
                 _hasUndo = NO;
@@ -691,12 +883,14 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
     _globalOpacity = MAX(0.20, MIN(1.0, opacity));
     _utilityButton.alpha = MAX(0.55, _globalOpacity);
     if (!enabled) [self clearInput];
+    [self updateGyroMotionState];
     [self setNeedsDisplay];
 }
 
 - (void)setPhysicalControllerConnected:(BOOL)connected {
     _physicalControllerConnected = connected;
     if (connected) [self clearInput];
+    [self updateGyroMotionState];
     [self setNeedsDisplay];
 }
 
@@ -751,6 +945,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
         const TouchControl& control = _controls[role];
         CGPoint point = [touch locationInView:self];
         if (control.kind == ControlKind::Stick) {
+            if (_gyroActive) continue;
             CGFloat radius = [self radiusForControl:control];
             CGFloat dx = point.x - _stickOrigin.x;
             CGFloat dy = point.y - _stickOrigin.y;
@@ -822,7 +1017,7 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
         if ([self handleToolbarPoint:point]) continue;
         NSInteger control = [self controlAtPoint:point includeHidden:_editing];
         if (!_editing && _gameplayControlsEnabled && !_physicalControllerConnected &&
-            !_modalControlsHidden &&
+            !_modalControlsHidden && !_gyroActive &&
             control == NSNotFound &&
             point.x <= CGRectGetMinX([self usableBounds]) + [self usableBounds].size.width * 0.47) {
             control = 0;
@@ -840,6 +1035,9 @@ NSInteger aspectModeFromSettings(NSDictionary* settings) {
             // and the N64 value use the identical clamped vector.
             _stickOrigin = [self centerForControl:_controls[control]];
             _stickKnob = _stickOrigin;
+        } else if (_controls[control].kind == ControlKind::GyroToggle) {
+            _gyroActive = !_gyroActive;
+            [self updateGyroMotionState];
         } else {
             // Preserve quick taps across several runtime polls without turning
             // a single shoulder tap into a long press.
@@ -921,6 +1119,10 @@ extern "C" void snappad_touch_attach(void* window_pointer) {
         CGFloat controlsOpacity = settings[@"touchOpacity"] == nil
             ? 0.70 : [settings[@"touchOpacity"] doubleValue];
         [overlay setGameplayControlsEnabled:controlsEnabled opacity:controlsOpacity];
+        [overlay setGyroSensitivity:gyroSensitivityFromSettings(settings)
+                   invertHorizontal:gyroInvertHorizontalFromSettings(settings)
+                     invertVertical:gyroInvertVerticalFromSettings(settings)];
+        [overlay setGyroFeatureEnabled:[settings[@"gyroControls"] boolValue]];
         [overlay setPhysicalControllerConnected:
             g_physical_controller_connected.load(std::memory_order_relaxed)];
         g_touch_overlay = overlay;
@@ -955,6 +1157,13 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
     }
     float touchX = g_touch_x.load(std::memory_order_relaxed) / 10000.0F;
     float touchY = g_touch_y.load(std::memory_order_relaxed) / 10000.0F;
+    if (g_gyro_input_active.load(std::memory_order_acquire)) {
+        touchX = g_gyro_x.load(std::memory_order_relaxed) / 10000.0F;
+        touchY = g_gyro_y.load(std::memory_order_relaxed) / 10000.0F;
+        if (x != nullptr) *x = touchX;
+        if (y != nullptr) *y = touchY;
+        return;
+    }
     uint8_t flickPolls = g_touch_flick_polls.load(std::memory_order_relaxed);
     if (touchX == 0.0F && touchY == 0.0F && flickPolls > 0) {
         touchX = g_touch_flick_x.load(std::memory_order_relaxed) / 10000.0F;
@@ -982,6 +1191,10 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
     UISwitch* _touchControlsSwitch;
     UISlider* _touchOpacitySlider;
     UILabel* _touchOpacityLabel;
+    UISlider* _gyroSensitivitySlider;
+    UILabel* _gyroSensitivityLabel;
+    UISwitch* _gyroInvertHorizontalSwitch;
+    UISwitch* _gyroInvertVerticalSwitch;
 }
 
 - (void)loadView {
@@ -1091,6 +1304,60 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
                   forControlEvents:UIControlEventValueChanged];
     [_touchOpacitySlider.heightAnchor constraintGreaterThanOrEqualToConstant:44.0].active = YES;
     [stack addArrangedSubview:_touchOpacitySlider];
+
+    // Gyro camera.
+    UILabel* gyroHeading = [self label:@"Gyro"];
+    gyroHeading.font = [UIFont boldSystemFontOfSize:19.0];
+    gyroHeading.accessibilityTraits |= UIAccessibilityTraitHeader;
+    [stack addArrangedSubview:gyroHeading];
+
+    UIStackView* gyroSensitivityRow = [[UIStackView alloc] init];
+    gyroSensitivityRow.axis = UILayoutConstraintAxisHorizontal;
+    [gyroSensitivityRow addArrangedSubview:[self label:@"Sensitivity"]];
+    _gyroSensitivityLabel = [self label:@"190%"];
+    _gyroSensitivityLabel.textAlignment = NSTextAlignmentRight;
+    [gyroSensitivityRow addArrangedSubview:_gyroSensitivityLabel];
+    [stack addArrangedSubview:gyroSensitivityRow];
+    _gyroSensitivitySlider = [[UISlider alloc] init];
+    _gyroSensitivitySlider.minimumValue =
+        snappad::kMinimumGyroSensitivity * 100.0;
+    _gyroSensitivitySlider.maximumValue =
+        snappad::kMaximumGyroSensitivity * 100.0;
+    _gyroSensitivitySlider.continuous = YES;
+    _gyroSensitivitySlider.accessibilityLabel = @"Gyro Sensitivity";
+    [_gyroSensitivitySlider addTarget:self action:@selector(gyroSettingsChanged:)
+                       forControlEvents:UIControlEventValueChanged];
+    [_gyroSensitivitySlider.heightAnchor constraintGreaterThanOrEqualToConstant:44.0].active = YES;
+    [stack addArrangedSubview:_gyroSensitivitySlider];
+
+    UIStackView* invertHorizontalRow = [[UIStackView alloc] init];
+    invertHorizontalRow.axis = UILayoutConstraintAxisHorizontal;
+    invertHorizontalRow.alignment = UIStackViewAlignmentCenter;
+    [invertHorizontalRow addArrangedSubview:[self label:@"Invert Horizontal"]];
+    _gyroInvertHorizontalSwitch = [[UISwitch alloc] init];
+    _gyroInvertHorizontalSwitch.accessibilityLabel = @"Invert Gyro Horizontal";
+    [_gyroInvertHorizontalSwitch addTarget:self action:@selector(gyroSettingsChanged:)
+                           forControlEvents:UIControlEventValueChanged];
+    [invertHorizontalRow addArrangedSubview:_gyroInvertHorizontalSwitch];
+    [stack addArrangedSubview:invertHorizontalRow];
+
+    UIStackView* invertVerticalRow = [[UIStackView alloc] init];
+    invertVerticalRow.axis = UILayoutConstraintAxisHorizontal;
+    invertVerticalRow.alignment = UIStackViewAlignmentCenter;
+    [invertVerticalRow addArrangedSubview:[self label:@"Invert Vertical"]];
+    _gyroInvertVerticalSwitch = [[UISwitch alloc] init];
+    _gyroInvertVerticalSwitch.accessibilityLabel = @"Invert Gyro Vertical";
+    [_gyroInvertVerticalSwitch addTarget:self action:@selector(gyroSettingsChanged:)
+                         forControlEvents:UIControlEventValueChanged];
+    [invertVerticalRow addArrangedSubview:_gyroInvertVerticalSwitch];
+    [stack addArrangedSubview:invertVerticalRow];
+
+    UILabel* gyroNote = [self label:
+        @"Gyro replaces the analog camera stick while GYRO ON is active. Increase sensitivity for faster camera movement; use inversion per axis if desired."];
+    gyroNote.font = [UIFont systemFontOfSize:14.0];
+    gyroNote.textColor = [UIColor colorWithWhite:0.72 alpha:1.0];
+    gyroNote.numberOfLines = 3;
+    [stack addArrangedSubview:gyroNote];
 
     // Actions.
     [stack addArrangedSubview:[self actionButton:@"Edit Touch Layout"
@@ -1210,6 +1477,7 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
     NSInteger aspect = aspectModeFromSettings(saved);
     BOOL touchControls = saved[@"touchControls"] == nil || [saved[@"touchControls"] boolValue];
     float touchOpacity = saved[@"touchOpacity"] ? [saved[@"touchOpacity"] floatValue] : 0.70f;
+    double gyroSensitivity = gyroSensitivityFromSettings(saved);
     _volumeSlider.value = volume * 100.0;
     _volumeLabel.text = [NSString stringWithFormat:@"%d%%", (int)lround(volume * 100.0)];
     _resolutionControl.selectedSegmentIndex = resolution;
@@ -1218,16 +1486,28 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
     _touchOpacitySlider.value = touchOpacity * 100.0f;
     _touchOpacityLabel.text = [NSString stringWithFormat:@"%d%%", (int)lround(touchOpacity * 100.0f)];
     _touchOpacitySlider.accessibilityValue = _touchOpacityLabel.text;
+    _gyroSensitivitySlider.value = gyroSensitivity * 100.0;
+    _gyroSensitivityLabel.text = [NSString stringWithFormat:
+        @"%d%%", (int)lround(gyroSensitivity * 100.0)];
+    _gyroSensitivitySlider.accessibilityValue = _gyroSensitivityLabel.text;
+    _gyroInvertHorizontalSwitch.on = gyroInvertHorizontalFromSettings(saved);
+    _gyroInvertVerticalSwitch.on = gyroInvertVerticalFromSettings(saved);
 }
 
 - (void)persist {
+    NSDictionary* previous = [NSUserDefaults.standardUserDefaults
+        dictionaryForKey:settingsDefaultsKey()];
     NSDictionary* saved = @{
-        @"schemaVersion": @4,
+        @"schemaVersion": @5,
         @"volume": @(_volumeSlider.value / 100.0),
         @"resolution": @(_resolutionControl.selectedSegmentIndex),
         @"aspect": @(_aspectControl.selectedSegmentIndex),
         @"touchControls": @(_touchControlsSwitch.isOn),
         @"touchOpacity": @(_touchOpacitySlider.value / 100.0),
+        @"gyroControls": @([previous[@"gyroControls"] boolValue]),
+        @"gyroSensitivity": @(_gyroSensitivitySlider.value / 100.0),
+        @"gyroInvertHorizontal": @(_gyroInvertHorizontalSwitch.isOn),
+        @"gyroInvertVertical": @(_gyroInvertVerticalSwitch.isOn),
     };
     [NSUserDefaults.standardUserDefaults setObject:saved forKey:settingsDefaultsKey()];
 }
@@ -1258,6 +1538,17 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
     _touchOpacityLabel.text = [NSString stringWithFormat:@"%d%%", (int)lround(slider.value)];
     slider.accessibilityValue = _touchOpacityLabel.text;
     [g_touch_overlay setGameplayControlsEnabled:_touchControlsSwitch.isOn opacity:opacity];
+    [self persist];
+}
+
+- (void)gyroSettingsChanged:(__unused UIControl*)control {
+    const double sensitivity = _gyroSensitivitySlider.value / 100.0;
+    _gyroSensitivityLabel.text = [NSString stringWithFormat:
+        @"%d%%", (int)lround(_gyroSensitivitySlider.value)];
+    _gyroSensitivitySlider.accessibilityValue = _gyroSensitivityLabel.text;
+    [g_touch_overlay setGyroSensitivity:sensitivity
+                       invertHorizontal:_gyroInvertHorizontalSwitch.isOn
+                         invertVertical:_gyroInvertVerticalSwitch.isOn];
     [self persist];
 }
 

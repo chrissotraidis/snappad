@@ -14,9 +14,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum iOS version" FORCE)
 endif()
 
-set(SNAPPAD_VERSION "0.1.0")
-set(SNAPPAD_BUILD_NUMBER "1")
-set(SNAPPAD_BUILD_PROFILE "community-release")
+set(SNAPPAD_VERSION "0.2.0")
+set(SNAPPAD_BUILD_NUMBER "2")
+set(SNAPPAD_BUILD_PROFILE "community-preview")
 set(DEVELOPMENT_TEAM "" CACHE STRING
     "Apple development team used for signed iPhoneOS builds")
 set(SNAPPAD_GENERATED_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/generated" CACHE PATH
@@ -34,7 +34,8 @@ endif()
 
 add_library(snappad_input STATIC
     port/runtime/accessory_policy.cpp
-    port/runtime/controller_slots.cpp)
+    port/runtime/controller_slots.cpp
+    port/runtime/gyro_input_policy.cpp)
 target_include_directories(snappad_input PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/port/runtime"
     "${CMAKE_CURRENT_SOURCE_DIR}/port/apple")
@@ -61,6 +62,11 @@ if(BUILD_TESTING)
         tests/touch_tap_latch_test.cpp)
     target_link_libraries(snappad_touch_tap_latch_test PRIVATE snappad_input)
     add_test(NAME snappad_touch_tap_latch COMMAND snappad_touch_tap_latch_test)
+
+    add_executable(snappad_gyro_input_policy_test
+        tests/gyro_input_policy_test.cpp)
+    target_link_libraries(snappad_gyro_input_policy_test PRIVATE snappad_input)
+    add_test(NAME snappad_gyro_input_policy COMMAND snappad_gyro_input_policy_test)
 
     add_executable(snappad_accessory_policy_test
         tests/accessory_policy_test.cpp)
@@ -420,7 +426,7 @@ if(SNAPPAD_BUILD_NATIVE_APP)
             PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
         target_link_libraries(SnapPad PRIVATE
             SDL2::SDL2main SDL2::SDL2-static
-            "-framework UIKit -framework Metal -framework QuartzCore -framework CoreGraphics -framework Foundation -framework UniformTypeIdentifiers")
+            "-framework UIKit -framework Metal -framework QuartzCore -framework CoreGraphics -framework CoreMotion -framework Foundation -framework UniformTypeIdentifiers")
         set_target_properties(SnapPad PROPERTIES
             MACOSX_BUNDLE TRUE
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/port/apple/Info.plist.in"

@@ -1,13 +1,17 @@
 # SnapPad rights status
 
 Status: **maintainer-authorized community release; upstream rights unresolved**
-Last reviewed: 2026-08-28
+Last reviewed: 2026-08-31
 
 On 28 August 2026, Chris accepted the current physical-iPad build as stable and
 explicitly authorized the first public SnapPad integration-source snapshot,
 tag, screenshot, and free unsigned ROM-free IPA. This records the maintainer's
 release decision; it does not establish permission from upstream authors or
 Nintendo and is not legal advice.
+
+On 31 August 2026, Chris accepted the gyro-enabled physical-iPad build as
+stable and explicitly authorized Preview 2 as another free integration-source
+snapshot and unsigned ROM-free IPA under the same rights boundary.
 
 ## Current findings
 
@@ -22,11 +26,11 @@ SnapPad is a separate integration repository. The pinned Pokémon Snap decomp is
 
 ## Current publication boundary
 
-The v0.1.0 release may include the SnapPad integration source, patches, scripts,
-documentation, screenshots, an unsigned ROM-free IPA, scoped rights notice,
-and dependency notices. It must not include any ROM, rebuilt ROM, extracted
-asset, generated AOT source input, save, photograph, private log, signing
-material, or maintainer provisioning profile.
+The v0.1.0 and Preview 2 releases may include the SnapPad integration source,
+patches, scripts, documentation, screenshots, an unsigned ROM-free IPA, scoped
+rights notice, and dependency notices. They must not include any ROM, rebuilt
+ROM, extracted asset, generated AOT source input, save, photograph, private
+log, signing material, or maintainer provisioning profile.
 
 The release is source-available community software, not a broad license grant
 for upstream or translated game code. Paid access, commercial licensing,

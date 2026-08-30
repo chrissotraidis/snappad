@@ -1410,3 +1410,28 @@ Append-only. Acceptance claims distinguish source inspection, compilation, launc
   contains version `0.1.0` build `1`, 54 dependency notice files, no signature
   or provisioning profile, and no ROM, save, generated input, credential, or
   private path.
+
+## 2026-08-31 — Preview 2 gyro release authorized
+
+- **Accepted tuning:** Chris completed a hands-on physical-iPad gyro pass. The
+  captured preferences recorded 190.4% sensitivity, horizontal inversion off,
+  and vertical inversion on. The product baseline rounds that deliberately to
+  190% while retaining the two inversion choices. Gyro feature enablement
+  remains opt-in through the three-dot menu.
+- **Release decision:** Chris accepted the gyro-enabled game as stable and
+  explicitly authorized source integration, merge to `main`, and a free
+  unsigned ROM-free Preview 2 GitHub prerelease under the existing rights
+  boundary.
+- **Physical update:** the signed `0.2.0` build `2` candidate installed and
+  launched in place on the accepted 12.9-inch iPad Pro. Pre/post SHA-256
+  readback proved the preferences plist, both FlashRAM saves, and both private
+  ROM copies remained byte-for-byte unchanged.
+- **Verification:** 31/31 host tests, Apple shell syntax, repository safety,
+  package audit, and `git diff --check` passed. Two independent public packages
+  were byte-identical.
+- **Exact artifact:** the 7,706,867-byte
+  `SnapPad-v0.2.0-preview.2-unsigned.ipa` has SHA-256
+  `f2d14409a8b342f1e24f388251eb52b0e354603139991068edfdefb336168efb`,
+  contains app version `0.2.0` build `2`, 54 dependency notice files, no
+  signature or provisioning profile, and no ROM, save, generated input,
+  credential, or private path.

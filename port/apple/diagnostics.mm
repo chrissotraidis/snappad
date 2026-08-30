@@ -3,6 +3,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+#include "gyro_input_policy.h"
 #include "snappad_input.h"
 
 #include <cerrno>
@@ -177,6 +178,20 @@ NSString* diagnosticReport(NSURL* root) {
     const double opacity = settings[@"touchOpacity"] == nil
         ? 0.70 : [settings[@"touchOpacity"] doubleValue];
     [report appendFormat:@"Touch opacity: %.0f%%\n", opacity * 100.0];
+    [report appendFormat:@"Gyro controls enabled: %@\n",
+        yesNo([settings[@"gyroControls"] boolValue])];
+    const double gyroSensitivity = settings[@"gyroSensitivity"] == nil
+        ? snappad::kDefaultGyroSensitivity
+        : [settings[@"gyroSensitivity"] doubleValue];
+    [report appendFormat:@"Gyro sensitivity: %.0f%%\n", gyroSensitivity * 100.0];
+    [report appendFormat:@"Gyro horizontal inverted: %@\n",
+        yesNo(settings[@"gyroInvertHorizontal"] == nil
+            ? snappad::kDefaultGyroInvertHorizontal
+            : [settings[@"gyroInvertHorizontal"] boolValue])];
+    [report appendFormat:@"Gyro vertical inverted: %@\n",
+        yesNo(settings[@"gyroInvertVertical"] == nil
+            ? snappad::kDefaultGyroInvertVertical
+            : [settings[@"gyroInvertVertical"] boolValue])];
     [report appendString:@"\nPrivacy note: this report excludes ROM and save contents. "];
     [report appendString:@"Review runtime text before choosing a share destination.\n\n"];
     const BOOL previousMayBeUnclean = [NSFileManager.defaultManager

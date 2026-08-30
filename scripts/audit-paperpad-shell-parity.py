@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import difflib
+import hashlib
 import subprocess
 from pathlib import Path
 
@@ -261,13 +262,17 @@ didPickDocumentsAtURLs:(NSArray<NSURL*>*)urls {
 
 def normalize_diagnostics(text: str) -> str:
     text = common_substitutions(text)
+    text = text.replace(
+        '#include "snappad_input.h"\n',
+        '#include "gyro_input_policy.h"\n#include "snappad_input.h"\n',
+    )
     # Diagnostics must describe SnapPad's exact supported 16 MiB input rather
     # than inheriting Paper Mario's 40 MiB size test.
     text = text.replace(
         "40ull * 1024ull * 1024ull",
         "16ull * 1024ull * 1024ull",
     )
-    return text.replace(
+    text = text.replace(
         '    [report appendFormat:@"Aspect ratio: %@\\n",\n'
         '        [settings[@"aspect"] integerValue] == 1 ? @"Fill Screen" : @"Original (4:3)"];',
         '    const NSInteger aspect = [settings[@"aspect"] integerValue];\n'
@@ -278,6 +283,36 @@ def normalize_diagnostics(text: str) -> str:
         '        aspectName = @"Wide (Experimental)";\n'
         '    }\n'
         '    [report appendFormat:@"Aspect ratio: %@\\n", aspectName];',
+    )
+    return text.replace(
+        '    [report appendFormat:@"Touch opacity: %.0f%%\\n", opacity * 100.0];\n',
+        '    [report appendFormat:@"Touch opacity: %.0f%%\\n", opacity * 100.0];\n'
+        '    [report appendFormat:@"Gyro controls enabled: %@\\n",\n'
+        '        yesNo([settings[@"gyroControls"] boolValue])];\n'
+        '    const double gyroSensitivity = settings[@"gyroSensitivity"] == nil\n'
+        '        ? snappad::kDefaultGyroSensitivity\n'
+        '        : [settings[@"gyroSensitivity"] doubleValue];\n'
+        '    [report appendFormat:@"Gyro sensitivity: %.0f%%\\n", gyroSensitivity * 100.0];\n'
+        '    [report appendFormat:@"Gyro horizontal inverted: %@\\n",\n'
+        '        yesNo(settings[@"gyroInvertHorizontal"] == nil\n'
+        '            ? snappad::kDefaultGyroInvertHorizontal\n'
+        '            : [settings[@"gyroInvertHorizontal"] boolValue])];\n'
+        '    [report appendFormat:@"Gyro vertical inverted: %@\\n",\n'
+        '        yesNo(settings[@"gyroInvertVertical"] == nil\n'
+        '            ? snappad::kDefaultGyroInvertVertical\n'
+        '            : [settings[@"gyroInvertVertical"] boolValue])];\n',
+    )
+
+
+def normalize_info_plist(text: str) -> str:
+    text = common_substitutions(text)
+    return text.replace(
+        '    <key>LSRequiresIPhoneOS</key>\n'
+        '    <true/>\n',
+        '    <key>LSRequiresIPhoneOS</key>\n'
+        '    <true/>\n'
+        '    <key>NSMotionUsageDescription</key>\n'
+        '    <string>SnapPad uses device motion only while you enable gyro camera controls.</string>\n',
     )
 
 
@@ -309,6 +344,31 @@ def assert_equal(label: str, expected: str, actual: str) -> None:
     raise SystemExit(f"error: unintended PaperPad shell drift in {label}:\n{difference}")
 
 
+# The substantial native gyro extension is easier to review as one pinned
+# unified difference than as a long sequence of reverse-normalization rules.
+IOS_MAIN_AUDITED_DIFF_SHA256 = (
+    "dd152e5cc236aa3d5bda97ac25c6c329a908f3f17f93f5c393559d225d4ef3b8"
+)
+
+
+def assert_audited_ios_difference(expected: str, actual: str) -> None:
+    difference = "\n".join(
+        difflib.unified_diff(
+            (expected.rstrip() + "\n").splitlines(),
+            (actual.rstrip() + "\n").splitlines(),
+            fromfile="normalized PaperPad ios_main.mm",
+            tofile="SnapPad ios_main.mm",
+            n=3,
+        )
+    )
+    digest = hashlib.sha256(difference.encode("utf-8")).hexdigest()
+    if digest != IOS_MAIN_AUDITED_DIFF_SHA256:
+        raise SystemExit(
+            "error: unintended PaperPad shell drift in ios_main.mm "
+            f"(audited diff SHA-256 {digest}):\n{difference}"
+        )
+
+
 def main() -> None:
     revision = subprocess.run(
         ["git", "-C", str(PAPERPAD), "rev-parse", "HEAD"],
@@ -319,13 +379,14 @@ def main() -> None:
     if revision != "74b6e45830a06c7f274c5ac1ddd7c625bc13a557":
         raise SystemExit(f"error: PaperPad parity pin changed: {revision}")
 
-    checks = (
-        (
-            "ios_main.mm",
-            PAPERPAD / "apple/app/ios_main.mm",
-            ROOT / "port/apple/ios_main.mm",
-            normalize_ios_main,
+    assert_audited_ios_difference(
+        normalize_ios_main(
+            (PAPERPAD / "apple/app/ios_main.mm").read_text(encoding="utf-8")
         ),
+        (ROOT / "port/apple/ios_main.mm").read_text(encoding="utf-8"),
+    )
+
+    checks = (
         (
             "rom_setup.mm",
             PAPERPAD / "apple/app/rom_setup.mm",
@@ -348,7 +409,7 @@ def main() -> None:
             "Info.plist.in",
             PAPERPAD / "apple/app/Info.plist.in",
             ROOT / "port/apple/Info.plist.in",
-            common_substitutions,
+            normalize_info_plist,
         ),
         (
             "PrivacyInfo.xcprivacy",

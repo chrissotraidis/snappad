@@ -5,13 +5,15 @@ SnapPad's touch shell is maintained as a narrow adaptation of PaperPad commit
 `scripts/audit-paperpad-shell-parity.py` normalizes the approved substitutions
 and then requires exact source equality for the following files:
 
-- `ios_main.mm`: identifiers only, plus removal of Paper Mario's private
-  `PSR_AUTOBOOT` test seam;
+- `ios_main.mm`: identifiers, removal of Paper Mario's private `PSR_AUTOBOOT`
+  test seam, Pokémon Snap's bounded input-edge changes, and the audited native
+  gyro control extension;
 - `rom_setup.mm`: identifiers, supported-game wording, exact Pokémon Snap ROM
   size/SHA-1, and private runtime filename;
-- `diagnostics.mm`: identifiers only;
+- `diagnostics.mm`: identifiers plus gyro enablement, sensitivity, and inversion status;
 - `touch_tap_latch.h`: class name plus an explanatory provenance comment;
-- `Info.plist.in`: product/build-setting identifiers only; and
+- `Info.plist.in`: product/build-setting identifiers plus the motion usage
+  description; and
 - `PrivacyInfo.xcprivacy`: byte-for-byte identical.
 
 The shell therefore retains PaperPad's control geometry, gestures, edit mode,
@@ -20,6 +22,12 @@ reset behavior, diagnostics export boundary, native document picker, and
 privacy declaration. Game-specific control labels and default layout may be
 tuned only after Pokémon Snap gameplay is running and the change is added to
 this explicit audit rather than silently drifting.
+
+The gyro extension remains default-off. Enabling it adds one persisted,
+device-class-specific layout control; the in-game button starts or stops
+bias-corrected Core Motion sampling and replaces the analog camera axes only
+while active. Menus, backgrounding, layout editing, touch disablement, and
+physical-controller ownership all pause motion input and clear its axes.
 
 The application-support/Metal path helper is source-derived but excluded from
 exact parity because SnapPad adds explicit framework/C-library includes and

@@ -13,14 +13,14 @@
   <img alt="iOS and iPadOS 15 or newer" src="https://img.shields.io/badge/iOS%20%2F%20iPadOS-15%2B-0A84FF?logo=apple">
   <img alt="Apple Silicon macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-0A84FF?logo=apple">
   <img alt="Metal renderer" src="https://img.shields.io/badge/renderer-Metal-5E5CE6">
-  <img alt="SnapPad 0.1.0 release" src="https://img.shields.io/badge/release-v0.1.0-34C759">
+  <img alt="SnapPad Preview 2 release" src="https://img.shields.io/badge/release-v0.2.0--preview.2-34C759">
   <img alt="Game data not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
 </p>
 
 ![Pokémon Snap running in SnapPad on a physical iPad Pro](docs/images/snappad-ipad-title-screen.png)
 
 <p align="center">
-  <strong><a href="https://github.com/chrissotraidis/snappad/releases/download/v0.1.0/SnapPad-v0.1.0-unsigned.ipa">Download SnapPad v0.1.0 for iPhone and iPad</a></strong><br>
+  <strong><a href="https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.2/SnapPad-v0.2.0-preview.2-unsigned.ipa">Download SnapPad Preview 2 for iPhone and iPad</a></strong><br>
   Unsigned, ROM-free IPA. Re-sign it with AltStore Classic or another compatible sideloading tool.
 </p>
 
@@ -45,18 +45,19 @@ What is already here:
 
 | Option | Status | What to do |
 |---|---|---|
-| GitHub `.ipa` | **Available: v0.1.0** | Download the unsigned ROM-free IPA, re-sign it with AltStore Classic or an equivalent tool, then select your own supported ROM. |
+| GitHub `.ipa` | **Available: Preview 2** | Download the unsigned ROM-free IPA, re-sign it with AltStore Classic or an equivalent tool, then select your own supported ROM. |
 | Local iPhone or iPad build | **Available** | Build the ROM-free app from source, sign it with your own Apple Development team, and supply your own supported ROM after installation. |
 | iPhone or iPad Simulator | **Available now** | Follow the build steps below. Simulator is suitable for development and UI/runtime testing, not a substitute for physical-device acceptance. |
 | Apple Silicon macOS | **Available now** | Build locally from source and supply your own supported ROM. There is no signed or notarized public download. |
 | TestFlight / App Store | **Not available** | The first release is distributed only as an unsigned GitHub IPA. |
 
-On 28 August 2026, the release candidate passed its ROM-free bundle audit and
+On 31 August 2026, the Preview 2 candidate passed its ROM-free bundle audit and
 ran on a physical 12.9-inch iPad Pro with iPadOS 26.6. The supported ROM was
 recognized from private app storage, Metal created the native Retina drawable,
-audio started through the verified RSP path, and live touch input was observed.
-The same candidate also passed the first-run, settings, lifecycle, and gameplay
-flows on current iPhone and iPad Simulators.
+audio started through the verified RSP path, and the maintainer accepted the
+native gyro camera controls after hands-on tuning. The same candidate also
+passed the first-run, settings, lifecycle, and gameplay flows on current iPhone
+and iPad Simulators.
 
 ## Current status
 
@@ -67,9 +68,9 @@ The same statically recompiled core now runs on macOS, iPadOS, and iOS. Progress
 | Apple Silicon macOS | Current desktop product boundary accepted: native first-play photograph/scoring loop, FlashRAM save/reload, measured cadence, clean exit, and 60-minute transition soak |
 | iPad Simulator | PaperPad-derived layout, native two-finger viewfinder/shutter, first-play flow, save, termination, and Continue reload accepted |
 | iPhone Simulator | Compact touch layout, per-control gameplay input, native settings/reset, fresh title/name/Oak flow, cross-device save, cadence, and background/foreground audio accepted |
-| Physical iPad | Current signed development build accepted as stable by the maintainer on a 12.9-inch iPad Pro running iPadOS 26.6 |
+| Physical iPad | Preview 2 signed development build and gyro controls accepted as stable by the maintainer on a 12.9-inch iPad Pro running iPadOS 26.6 |
 | Physical iPhone | ARM64 device build and shared mobile input path are available; dedicated hands-on iPhone acceptance remains limited |
-| Public binary distribution | **v0.1.0 available** as an audited unsigned, ROM-free GitHub IPA |
+| Public binary distribution | **Preview 2 available** as an audited unsigned, ROM-free GitHub IPA |
 
 The current mobile build fixes phone-specific input/lifecycle defects discovered during acceptance: quick analog flicks are retained across one complete game update, backgrounding suspends and clears queued audio before a clean foreground resume, and A/Start taps are emitted as single action edges so one touch produces one menu or name-entry action while the other controls retain true hold behavior.
 
@@ -90,10 +91,10 @@ SnapPad accepts `.z64`, `.v64`, and `.n64` byte orders, normalizes an ignored lo
 
 ## Install on iPhone or iPad
 
-SnapPad v0.1.0 supports iOS and iPadOS 15 or newer. The published IPA is
+SnapPad Preview 2 supports iOS and iPadOS 15 or newer. The published IPA is
 unsigned, so it must be re-signed before installation.
 
-1. [Download `SnapPad-v0.1.0-unsigned.ipa`](https://github.com/chrissotraidis/snappad/releases/download/v0.1.0/SnapPad-v0.1.0-unsigned.ipa).
+1. [Download `SnapPad-v0.2.0-preview.2-unsigned.ipa`](https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.2/SnapPad-v0.2.0-preview.2-unsigned.ipa).
 2. Install it with **AltStore Classic plus AltServer**, or another sideloading
    tool that can sign an unsigned IPA. AltStore PAL cannot import arbitrary
    unsigned IPA files.
@@ -204,8 +205,9 @@ flow.
 
 SnapPad retains PaperPad's complete native N64 overlay and interaction model. Phone and tablet layouts are independent, persist locally, and can be moved or reset from Settings.
 
-- **Menu:** the persistent `•••` button opens settings, diagnostics, and game setup.
+- **Menu:** the persistent `•••` button opens settings, gyro enablement, diagnostics, and game setup.
 - **Touch controls:** analog stick, D-pad, A, B, Z, C-buttons, L, R, and Start cover every Pokémon Snap camera, shutter, item, menu, and pause action.
+- **Gyro camera:** choose **Enable Gyro Controls** from `•••` to reveal a movable, resizable **GYRO OFF/ON** button. Turning it on replaces the touch analog camera input with bias-corrected device motion; turning it off restores the analog stick. **Settings → Gyro** provides 50–250% sensitivity plus independent horizontal and vertical inversion. Preview 2 defaults to the physically accepted 190% sensitivity, horizontal inversion off, and vertical inversion on.
 - **Layout editor:** move controls independently, link or unlink four-button clusters, adjust scale and opacity, or restore the current device-class defaults.
 - **Resolution:** choose Auto or a fixed 1x–4x internal rendering scale.
 - **Framing:** Original preserves the largest centered 4:3 image. Fill Screen center-crops that image. Wide (Experimental) asks RT64 to expand the rendered 3D field; Pokémon Snap's reticle, photo framebuffer, and scoring remain 4:3-authored, so Original is the accuracy default.
@@ -213,7 +215,7 @@ SnapPad retains PaperPad's complete native N64 overlay and interaction model. Ph
 - **Diagnostics:** create a reviewable text report through the system share sheet.
 - **ROM management:** replace or remove the privately stored supported ROM.
 
-Opening the menu, Settings, share sheet, or ROM picker clears held input and hides gameplay targets. Dismissing the sheet restores them only when Touch Controls is enabled. A physical controller hides gameplay touch targets while keeping the menu available, then restores touch controls after disconnect.
+Opening the menu, Settings, share sheet, or ROM picker clears held input, pauses gyro sampling, and hides gameplay targets. Dismissing the sheet restores them only when Touch Controls is enabled. A physical controller pauses gyro sampling and hides gameplay touch targets while keeping the menu available, then restores the prior touch/gyro state after disconnect.
 
 ### Keyboard and controller bindings
 
@@ -395,4 +397,4 @@ Its Apple shell, touch layout, persistent menu, modal input lifecycle, controlle
 
 SnapPad is an independent, unofficial project and is not affiliated with, endorsed by, or sponsored by Nintendo, The Pokémon Company, or their partners. Pokémon Snap and related names, characters, copyrights, and trademarks belong to their respective owners.
 
-The pinned Pokémon Snap decompilation has no general root license. A ROM-free package does not by itself establish redistribution permission, and static recompilation may still embody translated game logic. The maintainer explicitly authorized the free v0.1.0 source snapshot and unsigned ROM-free IPA on 28 August 2026; that decision does not grant rights in upstream code or Nintendo material and is not legal advice. See [Rights and licenses](RIGHTS_AND_LICENSES.md) and [Release readiness](docs/RELEASE-READINESS.md).
+The pinned Pokémon Snap decompilation has no general root license. A ROM-free package does not by itself establish redistribution permission, and static recompilation may still embody translated game logic. The maintainer explicitly authorized the free v0.1.0 source snapshot and unsigned ROM-free IPA on 28 August 2026 and Preview 2 on 31 August 2026; those decisions do not grant rights in upstream code or Nintendo material and are not legal advice. See [Rights and licenses](RIGHTS_AND_LICENSES.md) and [Release readiness](docs/RELEASE-READINESS.md).
