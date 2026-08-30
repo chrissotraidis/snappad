@@ -54,12 +54,21 @@ Run Original (4:3) first on one device at a time:
    and Continue without data loss.
 5. Move and reset the touch layout; check phone/tablet safe areas and comfortable
    two-thumb reach.
-6. Background for at least ten seconds and foreground; confirm rendering, input,
+6. Enable gyro from `•••`, move and resize the on-screen gyro toggle, then verify
+   both landscape orientations: **GYRO ON** must replace analog camera input with
+   correctly directed device motion, and **GYRO OFF** must restore the analog
+   stick without drift or a stuck axis.
+   In **Settings → Gyro**, verify the accepted 190% default is responsive,
+   vertical inversion defaults on, horizontal inversion defaults off, the
+   sensitivity slider changes camera speed, and each inversion switch affects
+   only its named axis.
+7. Background for at least ten seconds and foreground; confirm rendering, input,
    and audio resume without a stuck control or queued-audio burst.
-7. Connect a controller during gameplay; confirm touch targets hide, the menu
-   remains available, P1 mappings work, and touch returns after disconnect.
-8. Exercise a real audio interruption, then continue gameplay.
-9. Play a focused course band and a sustained session while observing cadence,
+8. Connect a controller during gameplay; confirm touch targets hide, gyro pauses,
+   the menu remains available, P1 mappings work, and touch/gyro return after
+   disconnect.
+9. Exercise a real audio interruption, then continue gameplay.
+10. Play a focused course band and a sustained session while observing cadence,
    audio continuity, temperature, memory pressure, and battery behavior.
 
 Record the device model, OS version, source revision, executable SHA-256,

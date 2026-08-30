@@ -1,7 +1,7 @@
 # SnapPad release readiness
 
-Status: **GO for the free v0.1.0 source snapshot and unsigned ROM-free IPA**.
-Last reviewed: 2026-08-28
+Status: **GO for Preview 2 source snapshot and unsigned ROM-free IPA**.
+Last reviewed: 2026-08-31
 
 The maintainer accepted the current physical-iPad build as stable and
 explicitly authorized the first source snapshot and unsigned GitHub IPA. The
@@ -9,6 +9,10 @@ release remains unofficial, source-available, ROM-free, and outside App Store
 or TestFlight distribution. Broader compatibility work and the upstream
 translated-code rights uncertainty remain documented rather than hidden. See
 `docs/RIGHTS-STATUS.md` and `RIGHTS_AND_LICENSES.md`.
+
+On 31 August 2026, the maintainer accepted the gyro-enabled physical-iPad
+candidate as stable and authorized Preview 2 under that same free,
+community-release boundary.
 
 ## Completed public-facing preparation
 
@@ -57,6 +61,25 @@ translated-code rights uncertainty remain documented rather than hidden. See
 - Signing: unsigned and re-signable; no provisioning profile
 - Game data: not included; user-supplied Pokémon Snap (USA) ROM required
 - Distribution: free GitHub community release; not App Store or TestFlight
+
+## Preview 2 release record
+
+- Tag: `v0.2.0-preview.2`
+- App version/build: `0.2.0` (`2`)
+- Toolchain: Xcode 26.6 (`17F113`), iPhoneOS 26.5 SDK
+- Platforms: iOS and iPadOS 15 or newer; ARM64; iPhone and iPad families
+- Artifact: `SnapPad-v0.2.0-preview.2-unsigned.ipa`
+- IPA SHA-256: `f2d14409a8b342f1e24f388251eb52b0e354603139991068edfdefb336168efb`
+- IPA size: `7,706,867 bytes`
+- Signing: unsigned and re-signable; no provisioning profile
+- Game data: not included; user-supplied Pokémon Snap (USA) ROM required
+- Distribution: free GitHub prerelease; not App Store or TestFlight
+- Accepted addition: opt-in native gyro camera controls with a movable in-game
+  toggle, 50–250% sensitivity, and independent axis inversion. The accepted
+  default is 190% sensitivity, horizontal inversion off, vertical inversion on.
+- Verification: 31/31 host tests, Apple shell syntax, repository safety,
+  package audit, and two byte-identical packaging passes succeeded. The signed
+  in-place iPad update preserved ROMs, saves, and preferences byte-for-byte.
 
 ## Known post-release work
 

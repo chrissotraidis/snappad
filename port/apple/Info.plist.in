@@ -30,6 +30,8 @@
     <true/>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <key>NSMotionUsageDescription</key>
+    <string>SnapPad uses device motion only while you enable gyro camera controls.</string>
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
     <key>ITSAppUsesNonExemptEncryption</key>
