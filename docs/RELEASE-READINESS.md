@@ -81,6 +81,29 @@ community-release boundary.
   package audit, and two byte-identical packaging passes succeeded. The signed
   in-place iPad update preserved ROMs, saves, and preferences byte-for-byte.
 
+## Preview 3 release record
+
+- Tag: `v0.2.0-preview.3`
+- App version/build: `0.2.0` (`3`)
+- Toolchain: Xcode 26.6 (`17F113`), iPhoneOS 26.5 SDK
+- Platforms: iOS and iPadOS 15 or newer; ARM64; iPhone and iPad families
+- Artifact: `SnapPad-v0.2.0-preview.3-unsigned.ipa`
+- IPA SHA-256: `5bd09cc0c15baa02586f6ea9637346b90d49d19526768235306903992e1b1c16`
+- IPA size: `7,706,518 bytes`
+- Signing: unsigned and re-signable; no provisioning profile
+- Game data: not included; user-supplied Pokémon Snap (USA) ROM required
+- Distribution: free GitHub prerelease; not App Store or TestFlight
+- Accepted behavior: normal hold-Z Beach photographs were selectable when the
+  game recognized a Pokémon, Professor Oak accepted multiple species and
+  better reports, and the next course unlocked on the physical iPad.
+- Controller boundary: iOS controller/keyboard press routing is repaired and
+  covered by an automated contract, but the reporter's PS5 and MCON hardware
+  was unavailable for physical confirmation.
+- Verification: 33/33 host tests, Apple shell syntax, repository safety,
+  source/patch verification, device and package audits, and two byte-identical
+  packaging passes succeeded. The signed in-place iPad update preserved both
+  private ROM copies, both saves, and preferences byte-for-byte.
+
 ## Known post-release work
 
 1. Complete dedicated physical-iPhone coverage and the wider physical-device

@@ -17,11 +17,6 @@ extern "C" void func_8009BCC4(std::uint8_t* rdram, recomp_context* context);
 
 namespace {
 
-constexpr std::uint16_t n64_a_button = 0x8000;
-constexpr std::uint16_t n64_z_button = 0x2000;
-
-std::atomic<std::uint16_t> observed_controller_buttons{0};
-std::atomic<std::uint64_t> shutter_sequence{0};
 std::atomic<bool> tunnel_hidden_path_ready{false};
 std::atomic<bool> tunnel_hidden_path_triggered{false};
 std::atomic<bool> tunnel_hidden_path_revealed{false};
@@ -36,7 +31,6 @@ std::atomic<std::int32_t> observed_focus_subject{-1};
 std::atomic<std::uint32_t> observed_focus_object{0};
 std::atomic<std::int32_t> observed_item_impact_subject{-1};
 std::mutex captured_subject_mutex;
-std::uint64_t captured_shutter_sequence = 0;
 std::vector<std::int32_t> captured_subjects;
 std::size_t next_captured_subject = 0;
 std::unordered_map<gpr, std::int32_t> subject_by_photo;
@@ -83,16 +77,6 @@ void arm_tunnel_hidden_path_route_if_window_open() {
 
 } // namespace
 
-extern "C" void SnapPad_ObserveControllerButtons(std::uint16_t buttons) {
-    const std::uint16_t previous =
-        observed_controller_buttons.exchange(buttons, std::memory_order_acq_rel);
-    if ((buttons & (n64_a_button | n64_z_button))
-            == (n64_a_button | n64_z_button)
-        && (previous & n64_a_button) == 0) {
-        shutter_sequence.fetch_add(1, std::memory_order_release);
-    }
-}
-
 extern "C" void SnapPad_ResetPhotoCaptureSession(
     std::uint8_t*, recomp_context*) {
     tunnel_hidden_path_ready.store(false, std::memory_order_release);
@@ -110,8 +94,6 @@ extern "C" void SnapPad_ResetPhotoCaptureSession(
     observed_focus_object.store(0, std::memory_order_release);
     observed_item_impact_subject.store(-1, std::memory_order_release);
     std::lock_guard<std::mutex> lock(captured_subject_mutex);
-    captured_shutter_sequence =
-        shutter_sequence.load(std::memory_order_acquire);
     captured_subjects.clear();
     next_captured_subject = 0;
     subject_by_photo.clear();
@@ -465,11 +447,7 @@ extern "C" void SnapPad_ObservePlayerFocus(
 
 extern "C" void SnapPad_CaptureFocusedSubject(
     std::uint8_t* rdram, recomp_context*) {
-    const std::uint64_t sequence = shutter_sequence.load(std::memory_order_acquire);
     std::lock_guard<std::mutex> lock(captured_subject_mutex);
-    if (sequence == captured_shutter_sequence) {
-        return;
-    }
 
     if (scoring_started) {
         captured_subjects.clear();
@@ -503,20 +481,17 @@ extern "C" void SnapPad_CaptureFocusedSubject(
     if (trace_path != nullptr && *trace_path != '\0') {
         if (std::FILE* file = std::fopen(trace_path, "a")) {
             std::fprintf(file,
-                "capture shutter=%llu focused=%d has_focus=%d recent=%d\n",
-                static_cast<unsigned long long>(sequence),
-                focused_subject,
+                "capture focused=%d has_focus=%d recent=%d\n", focused_subject,
                 has_focus ? 1 : 0,
                 recovered_recent_focus ? 1 : 0);
             std::fclose(file);
         }
     }
-    // makePhoto is not called for every synthetic A edge (the game can still
-    // be inside its shutter cooldown). PhotoData is allocated only for calls
-    // that reach this hook, so append exactly one correlation entry here.
-    // Filling sequence-number gaps would shift every later Camera Check item.
+    // This hook runs at makePhoto, after the game has accepted either its
+    // hold-Z/A shutter or its toggle-Z/A shutter. PhotoData is allocated only
+    // for calls that reach this hook, so append exactly one correlation entry
+    // here and do not infer capture from a particular controller gesture.
     captured_subjects.push_back(focused_subject);
-    captured_shutter_sequence = sequence;
 }
 
 extern "C" void SnapPad_RunSPIntegrityCheck(

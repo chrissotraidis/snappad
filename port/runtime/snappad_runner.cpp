@@ -1424,7 +1424,6 @@ namespace {
         *buttons = out_buttons;
         *x = clamped_x;
         *y = clamped_y;
-        SnapPad_ObserveControllerButtons(out_buttons);
 
         // Keep input evidence compact: button edges and coarse stick-direction
         // changes are enough to tell whether the app delivered a touch or

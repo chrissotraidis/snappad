@@ -7,7 +7,7 @@ and then requires exact source equality for the following files:
 
 - `ios_main.mm`: identifiers, removal of Paper Mario's private `PSR_AUTOBOOT`
   test seam, Pokémon Snap's bounded input-edge changes, and the audited native
-  gyro control extension;
+  gyro control and diagnostics/support menu extensions;
 - `rom_setup.mm`: identifiers, supported-game wording, exact Pokémon Snap ROM
   size/SHA-1, and private runtime filename;
 - `diagnostics.mm`: identifiers plus gyro enablement, sensitivity, and inversion status;
@@ -22,6 +22,10 @@ reset behavior, diagnostics export boundary, native document picker, and
 privacy declaration. Game-specific control labels and default layout may be
 tuned only after Pokémon Snap gameplay is running and the change is added to
 this explicit audit rather than silently drifting.
+
+The diagnostics/support extension keeps PaperPad's privacy-reviewed export
+flow and places it in a small submenu alongside a direct link to SnapPad's
+GitHub issue tracker. It does not upload logs automatically.
 
 The gyro extension remains default-off. Enabling it adds one persisted,
 device-class-specific layout control; the in-game button starts or stops

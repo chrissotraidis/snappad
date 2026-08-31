@@ -1015,21 +1015,6 @@ def render_expected(source: str) -> str:
     )
     source = replace_required(
         source,
-        """        *buttons = out_buttons;
-        *x = clamped_x;
-        *y = clamped_y;
-
-        // Keep input evidence compact:""",
-        """        *buttons = out_buttons;
-        *x = clamped_x;
-        *y = clamped_y;
-        SnapPad_ObserveControllerButtons(out_buttons);
-
-        // Keep input evidence compact:""",
-        "shutter edge observation",
-    )
-    source = replace_required(
-        source,
         """int PAPERPAD_MAIN(int argc, char** argv) {
     setvbuf(stderr, nullptr, _IONBF, 0);""",
         """int PAPERPAD_MAIN(int argc, char** argv) {

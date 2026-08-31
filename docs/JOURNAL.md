@@ -1435,3 +1435,32 @@ Append-only. Acceptance claims distinguish source inspection, compilation, launc
   contains app version `0.2.0` build `2`, 54 dependency notice files, no
   signature or provisioning profile, and no ROM, save, generated input,
   credential, or private path.
+
+## 2026-08-31 — Preview 3 photo/progression acceptance and support release authorized
+
+- **Issue review correction:** the reporter's MCON reference names their own
+  controller hardware; it is not part of the maintainer's test setup. The
+  game's zoom-switch state is also not a SnapPad three-dot-menu setting. The
+  physical acceptance pass therefore used Pokémon Snap's normal hold-Z camera
+  flow and did not claim unavailable controller coverage.
+- **Physical result:** Chris took multiple Beach photographs, selected the
+  recognized Pokémon at Camera Check, submitted several species and better
+  reports to Professor Oak, and unlocked the next course on the 12.9-inch iPad
+  Pro running iPadOS 26.6. Dark entries reporting no Pokémon remained normal
+  game outcomes rather than a progression blocker.
+- **Support result:** the new **Diagnostics & Support…** submenu exported its
+  text report and opened SnapPad's GitHub issue tracker successfully on the
+  physical iPad.
+- **Controller boundary:** the SDL2 iOS press-routing repair prevents the
+  controller-style UIKit Select fallback from duplicating keyboard Return/Start
+  and passes automated/build coverage. PS5 and MCON hardware acceptance remains
+  open, so Preview 3 asks affected players to export diagnostics after any
+  reproduction.
+- **Preservation:** the signed source-identical runtime candidate installed in
+  place. Pre/post readback proved both ROM copies, both FlashRAM saves, and
+  preferences were byte-for-byte unchanged. Public build `3` differs from the
+  physically tested build `2` only in bundle build metadata.
+- **Release candidate:** 33/33 tests and the repository, source, patch, Apple
+  syntax, device-bundle, and public-package audits passed. Two independently
+  created 7,706,518-byte IPAs were byte-identical at SHA-256
+  `5bd09cc0c15baa02586f6ea9637346b90d49d19526768235306903992e1b1c16`.

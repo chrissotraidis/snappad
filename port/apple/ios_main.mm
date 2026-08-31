@@ -186,6 +186,7 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
 @interface SnapPadTouchOverlayView : UIView
 - (void)beginEditingLayout;
 - (void)resetLayout;
+- (void)presentSupportMenuFrom:(UIViewController*)presenter;
 - (void)setGameplayControlsEnabled:(BOOL)enabled opacity:(CGFloat)opacity;
 - (void)setPhysicalControllerConnected:(BOOL)connected;
 - (void)setModalControlsHidden:(BOOL)hidden;
@@ -733,7 +734,7 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
     }];
     gyroAction.enabled = _motionManager.deviceMotionAvailable;
     [menu addAction:gyroAction];
-    [menu addAction:[UIAlertAction actionWithTitle:@"Share Diagnostics & Logs…"
+    [menu addAction:[UIAlertAction actionWithTitle:@"Diagnostics & Support…"
                                              style:UIAlertActionStyleDefault
                                            handler:^(__unused UIAlertAction* action) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)),
@@ -742,14 +743,60 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
             while (presenter.presentedViewController != nil) {
                 presenter = presenter.presentedViewController;
             }
-            if (presenter != nil) {
-                snappad_present_diagnostics_share((__bridge void*)presenter, ^{
-                    [self setModalControlsHidden:NO];
-                });
-            } else {
+            if (presenter == nil) {
                 [self setModalControlsHidden:NO];
+                return;
             }
+            [self presentSupportMenuFrom:presenter];
         });
+    }]];
+    [menu addAction:[UIAlertAction actionWithTitle:@"Cancel"
+                                             style:UIAlertActionStyleCancel
+                                           handler:^(__unused UIAlertAction* action) {
+        [self setModalControlsHidden:NO];
+    }]];
+    UIPopoverPresentationController* popover = menu.popoverPresentationController;
+    if (popover != nil) {
+        popover.sourceView = self;
+        popover.sourceRect = [self utilityButtonRect];
+        popover.permittedArrowDirections = UIPopoverArrowDirectionUp;
+    }
+    [presenter presentViewController:menu animated:YES completion:nil];
+}
+
+- (void)presentSupportMenuFrom:(UIViewController*)presenter {
+    UIAlertController* menu =
+        [UIAlertController alertControllerWithTitle:@"Diagnostics & Support"
+                                            message:@"Export a privacy-reviewed report or open SnapPad's GitHub issue tracker."
+                                     preferredStyle:UIAlertControllerStyleActionSheet];
+    [menu addAction:[UIAlertAction actionWithTitle:@"Export Diagnostics & Logs…"
+                                             style:UIAlertActionStyleDefault
+                                           handler:^(__unused UIAlertAction* action) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            UIViewController* sharePresenter = self.window.rootViewController;
+            while (sharePresenter.presentedViewController != nil) {
+                sharePresenter = sharePresenter.presentedViewController;
+            }
+            if (sharePresenter == nil) {
+                [self setModalControlsHidden:NO];
+                return;
+            }
+            snappad_present_diagnostics_share((__bridge void*)sharePresenter, ^{
+                [self setModalControlsHidden:NO];
+            });
+        });
+    }]];
+    [menu addAction:[UIAlertAction actionWithTitle:@"Open GitHub Issues"
+                                             style:UIAlertActionStyleDefault
+                                           handler:^(__unused UIAlertAction* action) {
+        NSURL* issuesURL = [NSURL URLWithString:
+            @"https://github.com/chrissotraidis/snappad/issues"];
+        [UIApplication.sharedApplication openURL:issuesURL
+                                         options:@{}
+                               completionHandler:^(__unused BOOL opened) {
+            [self setModalControlsHidden:NO];
+        }];
     }]];
     [menu addAction:[UIAlertAction actionWithTitle:@"Cancel"
                                              style:UIAlertActionStyleCancel

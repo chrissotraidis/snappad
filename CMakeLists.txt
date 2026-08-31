@@ -15,7 +15,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
 endif()
 
 set(SNAPPAD_VERSION "0.2.0")
-set(SNAPPAD_BUILD_NUMBER "2")
+set(SNAPPAD_BUILD_NUMBER "3")
 set(SNAPPAD_BUILD_PROFILE "community-preview")
 set(DEVELOPMENT_TEAM "" CACHE STRING
     "Apple development team used for signed iPhoneOS builds")
@@ -134,6 +134,12 @@ if(BUILD_TESTING)
     add_test(NAME snappad_runtime_patch_contract
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tests/runtime_patch_contract_test.py")
+    add_test(NAME snappad_sdl2_ios_controller_press_routing
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/sdl2_ios_controller_press_routing_test.py")
+    add_test(NAME snappad_support_menu_contract
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/support_menu_contract_test.py")
 
     set(SNAPPAD_XXHASH_ROOT
         "${SNAPPAD_RUNTIME_ROOT}/thirdparty/xxHash")
