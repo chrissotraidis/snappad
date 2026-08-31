@@ -161,15 +161,15 @@ int main() {
     require(MEM_HU(score_offset + 0x0A, score_address) == 0,
         "photo fallback rescored an uncorrelated report photo");
     require(MEM_W(score_offset + 0x00, score_address) == 0,
-        "photo fallback supplied points without a shutter correlation");
+        "photo fallback supplied points without a makePhoto correlation");
     require(context.r2 == score_address,
         "photo fallback did not restore the recompiled register context");
 
     constexpr gpr captured_photo_address = photo_address + 0x3A0;
     constexpr gpr captured_score_address = score_address + 0x1000;
     SnapPad_ResetPhotoCaptureSession(rdram, &context);
-    SnapPad_ObserveControllerButtons(0);
-    SnapPad_ObserveControllerButtons(0xA000);
+    // Toggle-camera mode reaches makePhoto after an A edge without Z remaining
+    // held. The makePhoto hook itself must therefore establish correlation.
     MEM_W(0, pokemon_snap::generated::player_focus_flag_vram) = 1;
     MEM_W(0, pokemon_snap::generated::player_focus_subject_vram) = 0x3EC;
     SnapPad_CaptureFocusedSubject(rdram, &context);
@@ -178,7 +178,7 @@ int main() {
     focused_photo_id = -1;
     SnapPad_ApplyPhotoScoreFallback(rdram, &context, captured_photo_address);
     require(MEM_HU(score_offset + 0x0A, captured_score_address) == 0x3EC,
-        "photo fallback did not retain the detector subject at shutter time");
+        "photo fallback did not retain the detector subject at makePhoto");
     require(MEM_W(score_offset + 0x00, captured_score_address) == 3000,
         "photo fallback did not supply the centered-shot baseline score");
     require(MEM_HU(score_offset + 0x0C, captured_score_address) == 1000,
@@ -189,8 +189,7 @@ int main() {
     constexpr gpr fresh_photo_address = photo_address + 0x740;
     constexpr gpr fresh_score_address = score_address + 0x2000;
     SnapPad_ResetPhotoCaptureSession(rdram, &context);
-    SnapPad_ObserveControllerButtons(0);
-    SnapPad_ObserveControllerButtons(0xA000);
+    MEM_W(0, pokemon_snap::generated::player_focus_flag_vram) = 1;
     MEM_W(0, pokemon_snap::generated::player_focus_subject_vram) = 16;
     SnapPad_CaptureFocusedSubject(rdram, &context);
     context.r2 = fresh_score_address;
@@ -202,8 +201,6 @@ int main() {
     constexpr gpr unrecognized_photo_address = photo_address + 0xAE0;
     constexpr gpr unrecognized_score_address = score_address + 0x3000;
     SnapPad_ResetPhotoCaptureSession(rdram, &context);
-    SnapPad_ObserveControllerButtons(0);
-    SnapPad_ObserveControllerButtons(0xA000);
     MEM_W(0, pokemon_snap::generated::player_focus_flag_vram) = 1;
     MEM_W(0, pokemon_snap::generated::player_focus_subject_vram) = 143;
     SnapPad_CaptureFocusedSubject(rdram, &context);

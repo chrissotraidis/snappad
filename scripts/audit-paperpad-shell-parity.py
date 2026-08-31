@@ -347,7 +347,7 @@ def assert_equal(label: str, expected: str, actual: str) -> None:
 # The substantial native gyro extension is easier to review as one pinned
 # unified difference than as a long sequence of reverse-normalization rules.
 IOS_MAIN_AUDITED_DIFF_SHA256 = (
-    "dd152e5cc236aa3d5bda97ac25c6c329a908f3f17f93f5c393559d225d4ef3b8"
+    "1da56621b6458c0a582717173eaa90853bbef1ff92b46aa539d1c1defafc1757"
 )
 
 

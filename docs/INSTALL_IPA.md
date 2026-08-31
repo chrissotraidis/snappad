@@ -1,12 +1,12 @@
 # Install SnapPad on iPhone or iPad
 
-SnapPad Preview 2 is published as an **unsigned, ROM-free IPA** for iOS and iPadOS
+SnapPad Preview 3 is published as an **unsigned, ROM-free IPA** for iOS and iPadOS
 15 or newer. It is not an App Store or TestFlight build. A sideloading tool
 must re-sign it for your device before installation.
 
-- [Download `SnapPad-v0.2.0-preview.2-unsigned.ipa`](https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.2/SnapPad-v0.2.0-preview.2-unsigned.ipa)
-- [Download the SHA-256 checksum](https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.2/SnapPad-v0.2.0-preview.2-unsigned.ipa.sha256)
-- Expected IPA SHA-256: `f2d14409a8b342f1e24f388251eb52b0e354603139991068edfdefb336168efb`
+- [Download `SnapPad-v0.2.0-preview.3-unsigned.ipa`](https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.3/SnapPad-v0.2.0-preview.3-unsigned.ipa)
+- [Download the SHA-256 checksum](https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.3/SnapPad-v0.2.0-preview.3-unsigned.ipa.sha256)
+- Expected IPA SHA-256: `5bd09cc0c15baa02586f6ea9637346b90d49d19526768235306903992e1b1c16`
 
 The IPA contains no Pokémon Snap ROM or other game data. You must supply your
 own legally obtained, unmodified Pokémon Snap (USA) ROM after installation.

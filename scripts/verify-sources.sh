@@ -30,7 +30,7 @@ for key_path_label in \
     "zstd|$SNAPPAD_REF/zstd|zstd"; do
     IFS='|' read -r key path label <<< "$key_path_label"
     if [[ -d "$path/.git" ]]; then
-        if [[ "$key" == "paperMarioReCut" ]]; then
+        if [[ "$key" == "paperMarioReCut" || "$key" == "sdl2" ]]; then
             verify_one "$key" "$path" "$label" true
         else
             verify_one "$key" "$path" "$label"

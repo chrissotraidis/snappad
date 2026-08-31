@@ -12,7 +12,6 @@ extern "C" {
 // header because the original game reaches AI_LEN through direct MMIO reads.
 void osAiGetLength_recomp(uint8_t* rdram, recomp_context* ctx);
 void SnapPad_RunSPIntegrityCheck(uint8_t* rdram, recomp_context* context);
-void SnapPad_ObserveControllerButtons(uint16_t buttons);
 void SnapPad_ResetPhotoCaptureSession(uint8_t* rdram, recomp_context* context);
 void SnapPad_ObservePlayerFocus(uint8_t* rdram, recomp_context* context);
 void SnapPad_EnableAcceptancePesterBall(uint8_t* rdram, recomp_context* context);

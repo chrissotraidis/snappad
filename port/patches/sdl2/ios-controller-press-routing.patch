@@ -1,0 +1,20 @@
+diff --git a/src/video/uikit/SDL_uikitview.m b/src/video/uikit/SDL_uikitview.m
+index 8e51a7cb8..da0b82516 100644
+--- a/src/video/uikit/SDL_uikitview.m
++++ b/src/video/uikit/SDL_uikitview.m
+@@ -382,6 +382,7 @@
+     }
+ #endif
+ 
++#if TARGET_OS_TV
+ #ifndef SDL_JOYSTICK_DISABLED
+     /* Presses from Apple TV remote */
+     if (!SDL_AppleTVRemoteOpenedAsJoystick) {
+@@ -408,6 +409,7 @@
+         }
+     }
+ #endif /* !SDL_JOYSTICK_DISABLED */
++#endif /* TARGET_OS_TV */
+ 
+     return SDL_SCANCODE_UNKNOWN;
+ }
