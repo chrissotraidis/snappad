@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "id": "snappad",
+  "name": "SnapPad",
+  "game": "Pok\u00e9mon Snap (N64, USA) via static recompilation",
+  "kind": "disc-translation",
+  "status": "draft-untested",
+  "inputs": [
+    {
+      "type": "n64-rom",
+      "formats": [
+        "z64",
+        "n64",
+        "v64"
+      ],
+      "when": "build",
+      "description": "Your own unmodified Pok\u00e9mon Snap (USA) ROM (absolute path), used to reproduce the exact ROM/ELF before generation. The app also asks for it on first launch."
+    }
+  ],
+  "targets": {
+    "ios": {
+      "hosts": {
+        "macos-arm64": "experimental"
+      },
+      "output": "ipa",
+      "check": "ipa",
+      "steps": [
+        {
+          "stage": "preflight",
+          "command": [
+            "{repo}/scripts/check-prerequisites.sh"
+          ]
+        },
+        {
+          "stage": "dependencies",
+          "command": [
+            "{repo}/scripts/clone-sources.sh"
+          ]
+        },
+        {
+          "stage": "verify-sources",
+          "command": [
+            "{repo}/scripts/verify-sources.sh"
+          ]
+        },
+        {
+          "stage": "tools",
+          "command": [
+            "{repo}/scripts/build-host-tools.sh"
+          ]
+        },
+        {
+          "stage": "prepare-rom",
+          "command": [
+            "{repo}/scripts/build-decomp.sh",
+            "--rom",
+            "{disc}"
+          ]
+        },
+        {
+          "stage": "translate",
+          "command": [
+            "{repo}/scripts/generate-game.sh"
+          ]
+        },
+        {
+          "stage": "compile",
+          "command": [
+            "{repo}/scripts/build-ios-device.sh",
+            "--unsigned"
+          ]
+        },
+        {
+          "stage": "package",
+          "command": [
+            "{repo}/scripts/package-unsigned-ipa.sh",
+            "{repo}/build-ios-device/Release-iphoneos/SnapPad.app",
+            "{output}"
+          ]
+        }
+      ]
+    },
+    "macos": {
+      "hosts": {
+        "macos-arm64": "planned"
+      }
+    }
+  },
+  "requirements": {
+    "disk_gb": 20,
+    "tools": [
+      {
+        "name": "git",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "cmake",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "ninja",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "python3",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "xcodebuild",
+        "version_args": [
+          "-version"
+        ],
+        "note": "Install Xcode and its iOS platform"
+      }
+    ]
+  },
+  "publication": {
+    "public_binaries": false,
+    "reason": "Personal builds contain game code translated from the player's ROM; public releases are source only."
+  }
+}
