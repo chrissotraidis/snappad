@@ -19,11 +19,6 @@
 
 ![Pokémon Snap running in SnapPad on a physical iPad Pro](docs/images/snappad-ipad-title-screen.png)
 
-<p align="center">
-  <strong><a href="https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.3/SnapPad-v0.2.0-preview.3-unsigned.ipa">Download SnapPad Preview 3 for iPhone and iPad</a></strong><br>
-  Unsigned, ROM-free IPA. Re-sign it with AltStore Classic or another compatible sideloading tool.
-</p>
-
 SnapPad turns your legally obtained, unmodified **Pokémon Snap (USA)** ROM into a game-specific native Apple app. It runs ahead-of-time ARM64 game code through Metal and includes complete touch controls, controller support, persistent saves, native settings, and a private Files-based setup flow.
 
 Under the hood, SnapPad combines the matching [Pokémon Snap decompilation](https://github.com/ethteck/pokemonsnap) with N64Recomp, N64ModernRuntime, RSPRecomp, and RT64. It is a game-specific static recompile, not a general Nintendo 64 emulator.
@@ -45,7 +40,6 @@ What is already here:
 
 | Option | Status | What to do |
 |---|---|---|
-| GitHub `.ipa` | **Available: Preview 3** | Download the unsigned ROM-free IPA, re-sign it with AltStore Classic or an equivalent tool, then select your own supported ROM. |
 | Local iPhone or iPad build | **Available** | Build the ROM-free app from source, sign it with your own Apple Development team, and supply your own supported ROM after installation. |
 | iPhone or iPad Simulator | **Available now** | Follow the build steps below. Simulator is suitable for development and UI/runtime testing, not a substitute for physical-device acceptance. |
 | Apple Silicon macOS | **Available now** | Build locally from source and supply your own supported ROM. There is no signed or notarized public download. |
@@ -92,14 +86,7 @@ SnapPad accepts `.z64`, `.v64`, and `.n64` byte orders, normalizes an ignored lo
 
 ## Install on iPhone or iPad
 
-SnapPad Preview 3 supports iOS and iPadOS 15 or newer. The published IPA is
-unsigned, so it must be re-signed before installation.
-
-1. [Download `SnapPad-v0.2.0-preview.3-unsigned.ipa`](https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.3/SnapPad-v0.2.0-preview.3-unsigned.ipa).
-2. Install it with **AltStore Classic plus AltServer**, or another sideloading
-   tool that can sign an unsigned IPA. AltStore PAL cannot import arbitrary
-   unsigned IPA files.
-3. Launch SnapPad and choose your own supported Pokémon Snap ROM through Files.
+Previous builds have been retired; a new version is in progress.
 
 See the [complete IPA installation and update guide](docs/INSTALL_IPA.md),
 including Developer Mode, free-account refresh limits, and preserving your ROM,
@@ -336,7 +323,7 @@ No. You must provide your own legally obtained, unmodified Pokémon Snap (USA) R
 <details>
 <summary><strong>Is there an IPA, TestFlight, or App Store build?</strong></summary>
 
-Yes. The GitHub release provides an audited, unsigned, ROM-free IPA for iOS and iPadOS 15 or newer. AltStore Classic plus AltServer, or another compatible tool, must re-sign it before installation. There is no TestFlight or App Store build.
+Previous builds have been retired; a new version is in progress. There is no TestFlight or App Store build.
 </details>
 
 <details>
