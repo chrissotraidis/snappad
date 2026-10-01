@@ -13,7 +13,7 @@
   <img alt="iOS and iPadOS 15 or newer" src="https://img.shields.io/badge/iOS%20%2F%20iPadOS-15%2B-0A84FF?logo=apple">
   <img alt="Apple Silicon macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-0A84FF?logo=apple">
   <img alt="Metal renderer" src="https://img.shields.io/badge/renderer-Metal-5E5CE6">
-  <img alt="SnapPad Preview 3 release" src="https://img.shields.io/badge/release-v0.2.0--preview.3-34C759">
+  <img alt="Public releases paused" src="https://img.shields.io/badge/downloads-paused-808080">
   <img alt="Game data not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
 </p>
 
@@ -26,7 +26,7 @@ Under the hood, SnapPad combines the matching [Pokémon Snap decompilation](http
 This repository contains integration source, patches, scripts, and documentation. It does **not** contain Pokémon Snap, a ROM, extracted Nintendo assets, generated playable game code, saves, in-game photographs, or a playable ROM-derived archive.
 
 > [!IMPORTANT]
-> The GitHub release is an **unsigned, ROM-free IPA**. It is not an App Store or TestFlight build and will not install until a sideloading tool re-signs it. You must supply your own legally obtained, unmodified Pokémon Snap (USA) ROM. SnapPad does not need JIT and never downloads game data.
+> **Public downloads are paused.** Previous IPAs have been retired; there is no current public SnapPad IPA or PadMint release recipe. Keep your existing installation and saves. Local development requires your own legally obtained, unmodified Pokémon Snap (USA) ROM. SnapPad does not need JIT and never downloads game data.
 
 What is already here:
 
@@ -40,10 +40,10 @@ What is already here:
 
 | Option | Status | What to do |
 |---|---|---|
-| Local iPhone or iPad build | **Available** | Build the ROM-free app from source, sign it with your own Apple Development team, and supply your own supported ROM after installation. |
+| Local iPhone or iPad build | **Source workflow** | Follow the source instructions below with your own supported ROM and Apple Development team. Keep the personal build private. |
 | iPhone or iPad Simulator | **Available now** | Follow the build steps below. Simulator is suitable for development and UI/runtime testing, not a substitute for physical-device acceptance. |
 | Apple Silicon macOS | **Available now** | Build locally from source and supply your own supported ROM. There is no signed or notarized public download. |
-| TestFlight / App Store | **Not available** | The first release is distributed only as an unsigned GitHub IPA. |
+| TestFlight / App Store | **Not available** | Neither channel is offered; previous GitHub IPAs are also retired. |
 
 On 31 August 2026, the Preview 3 candidate passed its ROM-free bundle audit and
 ran on a physical 12.9-inch iPad Pro with iPadOS 26.6. The supported ROM was
@@ -65,7 +65,7 @@ The same statically recompiled core now runs on macOS, iPadOS, and iOS. Progress
 | iPhone Simulator | Compact touch layout, per-control gameplay input, native settings/reset, fresh title/name/Oak flow, cross-device save, cadence, and background/foreground audio accepted |
 | Physical iPad | Preview 3 signed development build, Beach photo review, Oak scoring, and next-course progression accepted by the maintainer on a 12.9-inch iPad Pro running iPadOS 26.6 |
 | Physical iPhone | ARM64 device build and shared mobile input path are available; dedicated hands-on iPhone acceptance remains limited |
-| Public binary distribution | **Preview 3 available** as an audited unsigned, ROM-free GitHub IPA |
+| Public binary distribution | **Paused**; previous Preview 3 and earlier IPAs are retired, not public downloads |
 
 The current mobile build fixes phone-specific input/lifecycle defects discovered during acceptance: quick analog flicks are retained across one complete game update, backgrounding suspends and clears queued audio before a clean foreground resume, and A/Start taps are emitted as single action edges so one touch produces one menu or name-entry action while the other controls retain true hold behavior.
 
@@ -88,9 +88,10 @@ SnapPad accepts `.z64`, `.v64`, and `.n64` byte orders, normalizes an ignored lo
 
 Previous builds have been retired; a new version is in progress.
 
-See the [complete IPA installation and update guide](docs/INSTALL_IPA.md),
+For a private build, see the [IPA installation and update guide](docs/INSTALL_IPA.md),
 including Developer Mode, free-account refresh limits, and preserving your ROM,
-saves, and settings during updates.
+saves, and settings during updates. Its old Preview 3 download links are retired;
+they are not a way to obtain the app today.
 
 ## Build from source
 
