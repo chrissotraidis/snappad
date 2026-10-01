@@ -59,6 +59,10 @@ def main() -> None:
     require(ipa_package, 'audit-ios-package.sh', "IPA audit hook")
     require(ipa_audit, 'unzip -tq', "IPA ZIP integrity check")
     require(ipa_audit, 'public IPA must not contain a signature', "unsigned IPA gate")
+    require(ipa_audit, 'Unsigned SnapPad IPA structure audit passed', "bounded IPA result")
+    require(ipa_audit, 'do not establish public-content or publication clearance', "publication boundary")
+    if 'Public unsigned SnapPad IPA audit passed' in ipa_audit:
+        raise SystemExit("IPA structure audit must not imply publication clearance")
     for suffix in ("z64", "n64", "v64", "rom", "sav", "mobileprovision"):
         require(ipa_audit, suffix, "forbidden public IPA input")
 

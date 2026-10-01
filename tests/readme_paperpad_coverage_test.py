@@ -26,9 +26,15 @@ def main() -> None:
     for label, marker in required.items():
         if marker not in readme:
             raise SystemExit(f"README lost PaperPad-derived {label}: {marker}")
-    for boundary in ("unsigned, ROM-free IPA", "never downloads game data", "one Simulator"):
+    for boundary in ("Public downloads are paused", "never downloads game data", "one Simulator",
+                     "no current public SnapPad IPA or PadMint release recipe",
+                     "Its old Preview 3 download links are retired"):
         if boundary not in readme:
             raise SystemExit(f"README lost honest boundary: {boundary}")
+    for stale_claim in ("SnapPad Preview 3 release", "Preview 3 available",
+                        "The GitHub release is an", "The first release is distributed"):
+        if stale_claim in readme:
+            raise SystemExit(f"README restored a retired download claim: {stale_claim}")
     print("readme_paperpad_coverage_test: applicable PaperPad README structure retained")
 
 
