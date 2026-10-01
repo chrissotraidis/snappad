@@ -1,16 +1,23 @@
 # Install SnapPad on iPhone or iPad
 
-SnapPad Preview 3 is published as an **unsigned, ROM-free IPA** for iOS and iPadOS
-15 or newer. It is not an App Store or TestFlight build. A sideloading tool
-must re-sign it for your device before installation.
+> [!IMPORTANT]
+> **Public downloads are paused.** Previous IPAs are retired; there is
+> no current public SnapPad IPA or PadMint release recipe. Keep your existing
+> installation and saves. The steps below are for a personal IPA you built
+> yourself, not a download available from this page.
 
-- [Download `SnapPad-v0.2.0-preview.3-unsigned.ipa`](https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.3/SnapPad-v0.2.0-preview.3-unsigned.ipa)
-- [Download the SHA-256 checksum](https://github.com/chrissotraidis/snappad/releases/download/v0.2.0-preview.3/SnapPad-v0.2.0-preview.3-unsigned.ipa.sha256)
-- Expected IPA SHA-256: `5bd09cc0c15baa02586f6ea9637346b90d49d19526768235306903992e1b1c16`
+[Private source-build instructions](../README.md#build-from-source) require a
+Mac and your own supported ROM. Keep the personal build and game files private.
+An unsigned IPA must be re-signed for your device before installation; this is
+not an App Store or TestFlight route.
 
-The IPA contains no Pokémon Snap ROM or other game data. You must supply your
-own legally obtained, unmodified Pokémon Snap (USA) ROM after installation.
-SnapPad uses ahead-of-time ARM64 code and does not require JIT.
+### Historical Preview 3 (retired)
+
+Preview 3 was an unsigned, ROM-free IPA for iOS and iPadOS 15 or newer. Its
+filename was `SnapPad-v0.2.0-preview.3-unsigned.ipa`, with SHA-256
+`5bd09cc0c15baa02586f6ea9637346b90d49d19526768235306903992e1b1c16`.
+This is historical identification, not a public download or a checksum for a
+new personal build. ROM-free does not establish public-content clearance.
 
 ## Install with AltStore Classic
 
@@ -19,7 +26,7 @@ SnapPad uses ahead-of-time ARM64 code and does not require JIT.
    or [Windows guide](https://faq.altstore.io/altstore-classic/how-to-install-altstore-windows).
 2. Connect and trust your iPhone or iPad. On iOS or iPadOS 16 and later, enable
    **Settings → Privacy & Security → Developer Mode**.
-3. Download the SnapPad IPA above and save it to Files.
+3. Save your personal SnapPad IPA to Files.
 4. Keep AltServer running. Open AltStore Classic, choose **My Apps**, tap **+**,
    select the IPA, and wait for AltStore to sign and install it.
 5. Launch SnapPad, tap **Choose ROM**, and select your supported ROM through
@@ -37,7 +44,7 @@ three active sideloaded apps.
 
 To update SnapPad without losing its private ROM, saves, or settings:
 
-1. Download the newer IPA.
+1. Make a newer personal IPA from the source workflow.
 2. Install it over the existing SnapPad app using the same Apple ID and
    sideloading tool.
 3. Do **not** delete SnapPad first.
@@ -48,8 +55,9 @@ replace an app container outside SnapPad's control.
 
 ## If installation fails
 
-- Confirm you downloaded the complete `.ipa`, not the checksum file.
+- Confirm you selected the complete personal `.ipa`, not its checksum file.
 - Confirm you are using AltStore Classic with AltServer, not AltStore PAL.
 - Unlock and trust the device, and confirm Developer Mode is enabled.
 - Keep AltServer running on the same Wi-Fi network or connect the device by USB.
-- Verify the downloaded IPA against the SHA-256 value above.
+- Verify your personal IPA against the checksum generated with that build,
+  not the historical Preview 3 checksum above.
