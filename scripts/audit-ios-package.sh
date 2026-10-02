@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fail closed when auditing a public unsigned SnapPad IPA.
+# Check unsigned SnapPad IPA structure; public-content clearance is separate.
 set -euo pipefail
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source "$script_dir/lib/common.sh"
@@ -40,5 +40,6 @@ build=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Info.plist")
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "invalid IPA version: $version"
 [[ "$build" =~ ^[1-9][0-9]*$ ]] || die "invalid IPA build number: $build"
 
-note "Public unsigned SnapPad IPA audit passed: v$version ($build)"
+note "Unsigned SnapPad IPA structure audit passed: v$version ($build)"
+note "Structure/signing checks do not establish public-content or publication clearance."
 note "SHA-256: $(shasum -a 256 "$ipa" | awk '{print $1}')"
