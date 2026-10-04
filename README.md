@@ -15,6 +15,8 @@
   <img alt="Metal renderer" src="https://img.shields.io/badge/renderer-Metal-5E5CE6">
   <img alt="Public releases paused" src="https://img.shields.io/badge/downloads-paused-808080">
   <img alt="Game data not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
+  <a href="https://github.com/chrissotraidis/padmint"><img alt="Build SnapPad with PadMint" src="https://img.shields.io/badge/PadMint-build%20your%20own-3EB489"></a>
+  <a href="https://discord.gg/xwHfUD2bxW"><img alt="Join the SnapPad Discord" src="https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&amp;logoColor=white"></a>
 </p>
 
 ![Pokémon Snap running in SnapPad on a physical iPad Pro](docs/images/snappad-ipad-title-screen.png)
@@ -35,6 +37,13 @@ What is already here:
 - private ROM validation and storage with no bundled or downloaded game data;
 - Metal rendering, FlashRAM saves, controller input, diagnostics, and package-safety audits; and
 - reproducible scripts that keep ROMs, generated game code, saves, and signing material out of the repository.
+
+> [!NOTE]
+> **AI disclosure:** SnapPad uses substantial AI assistance for code, tests,
+> documentation, debugging and maintenance. Some support replies and maintenance
+> tasks are automated. There is no audited percentage of AI-generated code.
+> Build, test and device records describe what was checked. This disclosure
+> concerns SnapPad's workflow, not the authorship of its upstream projects.
 
 ## Install status
 
@@ -377,6 +386,16 @@ No. Testing covers the first-play loop, early courses, targeted progression path
 - [Maintained runtime patches](docs/PATCHES.md)
 - [Release readiness](docs/RELEASE-READINESS.md)
 - [Rights status](docs/RIGHTS-STATUS.md)
+
+## Community and support
+
+[Join the Discord](https://discord.gg/xwHfUD2bxW) for help and news. It is one
+community for SnapPad and its sibling projects, such as KartPad, BlueWake and
+MeleePad: ask about setup, building with PadMint, and installing, share how it
+runs on your device, and hear about new releases first.
+
+Found a bug? [Open an issue](https://github.com/chrissotraidis/snappad/issues)
+with your device, its OS version, and the steps that led to it.
 
 ## Credits and design references
 
