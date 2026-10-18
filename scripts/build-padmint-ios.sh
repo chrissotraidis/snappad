@@ -19,6 +19,8 @@ scripts/clone-sources.sh
 scripts/verify-sources.sh
 echo "SnapPad: checking and decompiling your ROM"
 scripts/build-decomp.sh --rom "$rom"
+echo "SnapPad: building the recompiler host tools"
+scripts/build-host-tools.sh
 echo "SnapPad: generating the game core"
 scripts/generate-game.sh
 echo "SnapPad: building the iPhone/iPad app"
