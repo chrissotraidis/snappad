@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "snappad",
   "name": "SnapPad",
-  "game": "Pokémon Snap (N64, USA)",
+  "game": "Pok\u00e9mon Snap (N64, USA)",
   "kind": "decomp-patches",
   "status": "experimental",
   "inputs": [
@@ -14,7 +14,7 @@
         "n64"
       ],
       "when": "build",
-      "description": "Your own Pokémon Snap (USA) ROM. It is checked and decompiled privately on this Mac during the build and never leaves it."
+      "description": "Your own Pok\u00e9mon Snap (USA) ROM. It is checked and decompiled privately on this Mac during the build and never leaves it."
     }
   ],
   "targets": {
@@ -43,7 +43,7 @@
     }
   },
   "requirements": {
-    "disk_gb": 25,
+    "disk_gb": 6,
     "tools": [
       {
         "name": "git",
