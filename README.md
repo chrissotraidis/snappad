@@ -13,7 +13,7 @@
   <img alt="iOS and iPadOS 15 or newer" src="https://img.shields.io/badge/iOS%20%2F%20iPadOS-15%2B-0A84FF?logo=apple">
   <img alt="Apple Silicon macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-0A84FF?logo=apple">
   <img alt="Metal renderer" src="https://img.shields.io/badge/renderer-Metal-5E5CE6">
-  <img alt="Public releases paused" src="https://img.shields.io/badge/downloads-paused-808080">
+  <img alt="Build with PadMint" src="https://img.shields.io/badge/get%20it-build%20with%20PadMint-3EB489">
   <img alt="Game data not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
   <a href="https://github.com/chrissotraidis/padmint"><img alt="Build SnapPad with PadMint" src="https://img.shields.io/badge/PadMint-build%20your%20own-3EB489"></a>
   <a href="https://discord.gg/xwHfUD2bxW"><img alt="Join the SnapPad Discord" src="https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&amp;logoColor=white"></a>
@@ -28,7 +28,7 @@ Under the hood, SnapPad combines the matching [Pokémon Snap decompilation](http
 This repository contains integration source, patches, scripts, and documentation. It does **not** contain Pokémon Snap, a ROM, extracted Nintendo assets, generated playable game code, saves, in-game photographs, or a playable ROM-derived archive.
 
 > [!IMPORTANT]
-> **Public downloads are paused.** Previous IPAs have been retired; there is no current public SnapPad IPA or PadMint release recipe. Keep your existing installation and saves. Local development requires your own legally obtained, unmodified Pokémon Snap (USA) ROM. SnapPad does not need JIT and never downloads game data.
+> **Build your own copy with [PadMint](https://github.com/chrissotraidis/padmint/releases/latest) 0.5.5 or newer.** On an Apple Silicon Mac with Xcode, choose **Pokémon Snap**, then **iPhone or iPad** or **This Mac**, and give PadMint your own legally obtained, unmodified Pokémon Snap (USA) ROM. PadMint checks and decompiles it privately on your Mac; there is no public SnapPad IPA. Install over an existing SnapPad to keep your saves. SnapPad does not need JIT and never downloads game data.
 
 What is already here:
 
