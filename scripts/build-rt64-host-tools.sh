@@ -8,9 +8,11 @@ source "$script_dir/lib/common.sh"
 "$script_dir/apply-patches.sh"
 "$script_dir/build-sdl2.sh"
 
+# These tools run on this Mac: name its SDK, since PadMint clears SDKROOT for iPhone builds.
 rt64="$SNAPPAD_REF/paper-mario-recut/lib/rt64"
 build_dir="$SNAPPAD_ROOT/build-rt64-host-tools"
 cmake -S "$rt64" -B "$build_dir" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_OSX_SYSROOT="$(xcrun --sdk macosx --show-sdk-path)" \
     -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="$build_dir" \
     -DRT64_STATIC=ON -DRT64_BUILD_TOOLS=ON \
     -DPAPERPAD_ZSTD_SOURCE_DIR="$SNAPPAD_REF/zstd" \
