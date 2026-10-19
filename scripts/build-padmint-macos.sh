@@ -22,6 +22,8 @@ echo "SnapPad: building the recompiler host tools"
 scripts/build-host-tools.sh
 echo "SnapPad: generating the game core"
 scripts/generate-game.sh
+echo "SnapPad: building the pinned SDL2 for the Mac app"
+scripts/build-sdl2.sh
 echo "SnapPad: building the Mac app"
 scripts/build-macos-app.sh
 app="$root/build-macos-app/SnapPad.app"
