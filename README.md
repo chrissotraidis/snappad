@@ -406,3 +406,12 @@ Its Apple shell, touch layout, persistent menu, modal input lifecycle, controlle
 SnapPad is an independent, unofficial project and is not affiliated with, endorsed by, or sponsored by Nintendo, The Pokémon Company, or their partners. Pokémon Snap and related names, characters, copyrights, and trademarks belong to their respective owners.
 
 The pinned Pokémon Snap decompilation has no general root license. A ROM-free package does not by itself establish redistribution permission, and static recompilation may still embody translated game logic. The maintainer explicitly authorized the free v0.1.0 source snapshot and unsigned ROM-free IPA on 28 August 2026 and Preview 2 on 31 August 2026; those decisions do not grant rights in upstream code or Nintendo material and are not legal advice. See [Rights and licenses](RIGHTS_AND_LICENSES.md) and [Release readiness](docs/RELEASE-READINESS.md).
+
+## Legal
+
+SnapPad is an unofficial, fan-made project. It is not affiliated with, endorsed
+by, or sponsored by Nintendo. Pokémon and related names are trademarks of
+Nintendo, Creatures Inc. and GAME FREAK inc. This repository contains no game
+data, ROMs, or extracted assets. To use it, you need your own legally obtained
+copy of the game, and you build it yourself on your own machine. Please don't
+share game files or builds made from them.
