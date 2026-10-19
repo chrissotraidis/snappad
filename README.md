@@ -19,8 +19,6 @@
   <a href="https://discord.gg/xwHfUD2bxW"><img alt="Join the SnapPad Discord" src="https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&amp;logoColor=white"></a>
 </p>
 
-![Pokémon Snap running in SnapPad on a physical iPad Pro](docs/images/snappad-ipad-title-screen.png)
-
 SnapPad turns your legally obtained, unmodified **Pokémon Snap (USA)** ROM into a game-specific native Apple app. It runs ahead-of-time ARM64 game code through Metal and includes complete touch controls, controller support, persistent saves, native settings, and a private Files-based setup flow.
 
 Under the hood, SnapPad combines the matching [Pokémon Snap decompilation](https://github.com/ethteck/pokemonsnap) with N64Recomp, N64ModernRuntime, RSPRecomp, and RT64. It is a game-specific static recompile, not a general Nintendo 64 emulator.
