@@ -28,9 +28,9 @@
       "provenance": "Optional diagnostic HLE audio backend; not selected silently"
     },
     "sdl2": {
-      "url": "https://github.com/libsdl-org/SDL.git",
-      "commit": "5d249570393f7a37e037abf22cd6012a4cc56a71",
-      "provenance": "PaperPad-pinned SDL 2.32.10 source"
+      "url": "https://github.com/chrissotraidis/SDL.git",
+      "commit": "c6756fcd3de8090a8f72ac1a0b6fb6e50f0021d1",
+      "provenance": "PaperPad-pinned SDL 2.32.10 plus the Pad ports UIKit scene startup commit (iOS 27 SDK)"
     },
     "zstd": {
       "url": "https://github.com/facebook/zstd.git",
