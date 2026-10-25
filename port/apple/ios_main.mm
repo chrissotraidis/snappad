@@ -21,6 +21,9 @@
 #include "snappad_input.h"
 
 extern "C" int snappad_recomp_main(int argc, char** argv);
+#if defined(SNAPPAD_USE_GAME_MODULE)
+extern "C" const char* snappad_load_game_module(const char* path);
+#endif
 
 @class SnapPadTouchOverlayView;
 @class SnapPadSettingsViewController;
@@ -1640,6 +1643,16 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
 
 extern "C" int SDL_main(int argc, char** argv) {
     @autoreleasepool {
+#if defined(SNAPPAD_USE_GAME_MODULE)
+        NSString* module = [NSBundle.mainBundle pathForResource:@"SnapPadGame"
+                                                       ofType:@"dylib"
+                                                  inDirectory:@"Frameworks"];
+        if (const char* message = snappad_load_game_module(module.fileSystemRepresentation)) {
+            std::fprintf(stderr, "SnapPad: %s\n", message);
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Build SnapPad with PadMint", message, nullptr);
+            return EXIT_FAILURE;
+        }
+#endif
         SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
         SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
         // Apply persisted settings before the game starts.

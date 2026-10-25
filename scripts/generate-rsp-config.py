@@ -135,8 +135,8 @@ def render_config(
 text_offset = 0x{text_offset:X}
 text_size = 0x{text_size:X}
 text_address = 0x{TEXT_ADDRESS:08X}
-rom_file_path = "{ROM}"
-output_file_path = "{RSP_OUTPUT}"
+rom_file_path = {json.dumps(ROM.as_posix())}
+output_file_path = {json.dumps(RSP_OUTPUT.as_posix())}
 output_function_name = "aspMain"
 
 # Unique nonzero big-endian halfwords from the microcode-derived

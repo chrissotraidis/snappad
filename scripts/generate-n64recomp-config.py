@@ -64,9 +64,12 @@ def fail(message: str) -> "NoReturn":
 
 
 def run_readelf(*args: str) -> str:
+    # The Windows GNU tools accept Unicode working directories but not narrow
+    # absolute Unicode filename arguments. Generated artifact names are ASCII.
     try:
         return subprocess.run(
-            [str(READELF), *args, str(ELF)],
+            [str(READELF.resolve()), *args, ELF.name],
+            cwd=ELF.parent,
             check=True,
             capture_output=True,
             text=True,
@@ -189,7 +192,8 @@ def parse_symbols(output: str) -> list[tuple[int, int, str, str, str, str]]:
 def read_object_symbols(path: Path) -> list[tuple[int, int, str, str, str, str]]:
     try:
         output = subprocess.run(
-            [str(READELF), "-sW", str(path)],
+            [str(READELF.resolve()), "-sW", path.name],
+            cwd=path.parent,
             check=True,
             capture_output=True,
             text=True,
@@ -203,12 +207,13 @@ def run_objdump_range(start: int, end: int) -> str:
     try:
         return subprocess.run(
             [
-                str(OBJDUMP),
+                str(OBJDUMP.resolve()),
                 "-d",
                 f"--start-address=0x{start:X}",
                 f"--stop-address=0x{end:X}",
-                str(ELF),
+                ELF.name,
             ],
+            cwd=ELF.parent,
             check=True,
             capture_output=True,
             text=True,
@@ -901,9 +906,9 @@ def main() -> None:
 
 [input]
 entrypoint = 0x{entrypoint:08X}
-elf_path = "{ELF}"
-rom_file_path = "{ROM}"
-output_func_path = "{OUTPUT_FUNCS}"
+elf_path = {json.dumps(ELF.as_posix())}
+rom_file_path = {json.dumps(ROM.as_posix())}
+output_func_path = {json.dumps(OUTPUT_FUNCS.as_posix())}
 recomp_include = "#include \\"recomp.h\\"\\n#include \\"snappad_game_hooks.h\\""
 
 {function_sizes}

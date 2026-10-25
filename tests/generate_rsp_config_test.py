@@ -6,9 +6,11 @@ from __future__ import annotations
 import contextlib
 import importlib.util
 import io
+import json
 import struct
 import unittest
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+from unittest import mock
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/generate-rsp-config.py"
@@ -86,6 +88,15 @@ class RspConfigTests(unittest.TestCase):
         self.assertIn("aspMainData[0x10..0x2F]", config)
         self.assertIn('output_function_name = "aspMain"', config)
         self.assertNotIn("unsupported_instructions", config)
+
+    def test_windows_paths_with_spaces_are_valid_quoted_config_values(self) -> None:
+        rom = PureWindowsPath(r"V:\private inputs\source.z64")
+        output = PureWindowsPath(r"V:\private build\aspMain.cpp")
+        with mock.patch.object(MODULE, "ROM", rom), mock.patch.object(MODULE, "RSP_OUTPUT", output):
+            config = MODULE.render_config(0x3E580, 0xE20, 0x10, [0x1080, 0x1084])
+        values = dict(line.split(" = ", 1) for line in config.splitlines() if " = " in line)
+        self.assertEqual(json.loads(values["rom_file_path"]), rom.as_posix())
+        self.assertEqual(json.loads(values["output_file_path"]), output.as_posix())
 
 
 if __name__ == "__main__":

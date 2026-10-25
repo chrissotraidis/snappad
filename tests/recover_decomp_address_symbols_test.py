@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib.util
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,6 +48,22 @@ ninja = (
 patched = MODULE.inject_linker_script(ninja, "build/snappad_undefined_syms.ld")
 assert "-T build/snappad_undefined_syms.ld -Map" in patched
 assert MODULE.inject_linker_script(patched, "build/snappad_undefined_syms.ld") == patched
+
+with mock.patch.object(MODULE.os, "name", "nt"):
+    linker = r"V:\tool folder$verified\ld.exe"
+    command = 'command = "V:\\tool folder$$verified\\ld.exe" -T undefined_syms.txt -T undefined_syms_auto.txt '
+    windows_ninja = "rule ld\n  " + command + "-Map $mapfile -T $in -o $out\n"
+    changed = MODULE.inject_linker_script(windows_ninja, "build/recovered.ld", linker)
+    assert "-T build/recovered.ld -Map" in changed
+    assert MODULE.inject_linker_script(changed, "build/recovered.ld", linker) == changed
+    for invalid in (windows_ninja + windows_ninja, changed + windows_ninja,
+                    changed + changed, windows_ninja.replace("ld.exe", "other.exe")):
+        try:
+            MODULE.inject_linker_script(invalid, "build/recovered.ld", linker)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("ambiguous or different linker was accepted")
 
 with tempfile.TemporaryDirectory() as tmp:
     path = Path(tmp) / "symbols.ld"

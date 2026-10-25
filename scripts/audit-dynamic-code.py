@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import struct
 import subprocess
@@ -103,20 +104,22 @@ def decompress_payload(compressed: bytes) -> tuple[bytes, int]:
     return payload, consumed
 
 
-def disassemble(payload_path: Path, objdump: Path = OBJDUMP) -> tuple[str, Counter[str]]:
-    if not objdump.is_file() or not objdump.stat().st_mode & 0o111:
+def disassemble(payload_path: Path, objdump: Path | None = None) -> tuple[str, Counter[str]]:
+    objdump = OBJDUMP if objdump is None else objdump
+    if not objdump.is_file() or (os.name != "nt" and not objdump.stat().st_mode & 0o111):
         fail(f"missing executable MIPS objdump: {objdump}")
     result = subprocess.run(
         [
-            str(objdump),
+            str(objdump.resolve()),
             "-D",
             "--disassemble-zeroes",
             "-b", "binary",
             "-m", "mips:4300",
             "-EB",
             f"--adjust-vma=0x{LOAD_ADDRESS:08X}",
-            str(payload_path),
+            payload_path.name,
         ],
+        cwd=payload_path.parent,
         capture_output=True,
         text=True,
     )
