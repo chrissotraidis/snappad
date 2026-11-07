@@ -31,7 +31,7 @@ def source_locations(pattern: str) -> list[dict[str, object]]:
             if expression.search(line):
                 locations.append(
                     {
-                        "path": str(path.relative_to(DECOMP)),
+                        "path": path.relative_to(DECOMP).as_posix(),
                         "line": line_number,
                         "text": line.strip(),
                     }
@@ -39,9 +39,9 @@ def source_locations(pattern: str) -> list[dict[str, object]]:
     return locations
 
 
-def main() -> None:
+def main(source_reference: Path | None = None) -> None:
     revision = subprocess.run(
-        ["git", "-C", str(DECOMP), "rev-parse", "HEAD"],
+        ["git", "-C", str(source_reference or DECOMP), "rev-parse", "HEAD"],
         check=True,
         capture_output=True,
         text=True,

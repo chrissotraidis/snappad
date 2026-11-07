@@ -35,6 +35,38 @@ def parse_text_symbols(nm_output: str) -> set[str]:
     return symbols
 
 
+def collect_defined_symbols(nm: Path, objects: list[Path]) -> tuple[set[str], set[str]]:
+    """Bound native command lengths while preserving every object's definitions."""
+    command = [str(nm), "-g", "--defined-only"]
+    # Windows CreateProcess is limited to 32767 UTF-16 units, including quoting.
+    # Use headroom for executable paths and retain the same batches on all hosts.
+    def length(arguments):
+        return len(subprocess.list2cmdline(arguments).encode("utf-16-le")) // 2 + 1
+
+    base_length = length(command)
+    pending, size = [], base_length
+    defined, text_symbols = set(), set()
+
+    def collect(batch):
+        result = subprocess.run(command + batch, check=True, capture_output=True, text=True)
+        defined.update(parse_defined_symbols(result.stdout))
+        text_symbols.update(parse_text_symbols(result.stdout))
+
+    for path in objects:
+        argument = str(path)
+        extra = length([argument])
+        if base_length + extra > 16000:
+            raise ValueError("object path exceeds the supported native command length")
+        if pending and size + extra > 16000:
+            collect(pending)
+            pending, size = [], base_length
+        pending.append(argument)
+        size += extra
+    if pending:
+        collect(pending)
+    return defined, text_symbols
+
+
 def filter_assignments(text: str, defined: set[str]) -> tuple[str, list[str]]:
     kept: list[str] = []
     removed: list[str] = []
@@ -93,14 +125,7 @@ def main() -> int:
     objects = sorted(args.objects.rglob("*.o"))
     if not objects:
         raise SystemExit("error: decomp object directory contains no objects")
-    result = subprocess.run(
-        [str(args.nm), "-g", "--defined-only", *map(str, objects)],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    defined = parse_defined_symbols(result.stdout)
-    text_symbols = parse_text_symbols(result.stdout)
+    defined, text_symbols = collect_defined_symbols(args.nm, objects)
     filtered, removed = filter_assignments(args.input.read_text(), defined)
     if not removed:
         raise SystemExit("error: no generated assignments overlap compiled definitions")

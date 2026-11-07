@@ -26,8 +26,8 @@ def main() -> None:
     for label, marker in required.items():
         if marker not in readme:
             raise SystemExit(f"README lost PaperPad-derived {label}: {marker}")
-    for boundary in ("Public downloads are paused", "never downloads game data", "one Simulator",
-                     "no current public SnapPad IPA or PadMint release recipe",
+    for boundary in ("Public SnapPad binary downloads are paused", "never downloads game data", "one Simulator",
+                     "there is no public SnapPad IPA", "On an Apple Silicon Mac with Xcode",
                      "Its old Preview 3 download links are retired"):
         if boundary not in readme:
             raise SystemExit(f"README lost honest boundary: {boundary}")
@@ -36,8 +36,9 @@ def main() -> None:
         if stale_claim in readme:
             raise SystemExit(f"README restored a retired download claim: {stale_claim}")
     guide = (ROOT / "docs/INSTALL_IPA.md").read_text(encoding="utf-8")
-    for boundary in ("Public downloads are paused",
-                     "no current public SnapPad IPA or PadMint release recipe",
+    for boundary in ("Public SnapPad binary downloads are paused",
+                     "there is no current public SnapPad IPA", "existing PadMint recipe",
+                     "Apple Silicon Mac with Xcode",
                      "Private source-build instructions",
                      "Do **not** delete SnapPad first."):
         if boundary not in guide:
@@ -46,6 +47,8 @@ def main() -> None:
                         "Download the SnapPad IPA above", "Download the newer IPA"):
         if stale_claim in guide:
             raise SystemExit(f"Install guide restored a retired download claim: {stale_claim}")
+    if "no current public SnapPad IPA or PadMint release recipe" in readme + guide:
+        raise SystemExit("Documentation hides the existing personal Mac PadMint recipe")
     print("readme_paperpad_coverage_test: applicable PaperPad README structure retained")
 
 

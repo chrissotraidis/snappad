@@ -1,0 +1,73 @@
+name: Module source generators
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generators:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            architecture: x64
+          - runner: windows-11-arm
+            architecture: arm64
+          - runner: macos-15
+            architecture: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.13'
+          architecture: ${{ matrix.architecture }}
+      - name: Source identity and generated-input checks
+        run: python -B -m unittest discover -s tests -p module_contract_test.py
+      - name: Portable generation checks
+        run: python -B -m unittest discover -s tests -p module_generation_test.py
+      - name: Tool inventory, source preservation and cache checks
+        run: python -B -m unittest discover -s tests -p windows_module_build_test.py
+      - name: Portable decompilation rule and path checks
+        run: python -B -m unittest discover -s tests -p portable_decomp_test.py
+      - name: Prepare exact public source pins and reviewed patches
+        shell: python
+        run: |
+          import importlib.util
+          import os
+          from pathlib import Path
+          spec = importlib.util.spec_from_file_location("windows_module", "scripts/build-windows-module.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          work = Path("build/ci").resolve()
+          for key in ("pokemonSnap", "paperMarioReCut"):
+              source = module.prepare_source(key, module.source_destination(work, key), os.environ.copy())
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as stream:
+              stream.write("SNAPPAD_CI_RECUT=" + str(source) + "\n")
+      - name: Build native generators and execute public fixtures
+        shell: python
+        run: |
+          import os
+          import subprocess
+          import sys
+          subprocess.run([sys.executable, "-B", "scripts/check-host-generators.py",
+                          "--source", os.environ["SNAPPAD_CI_RECUT"],
+                          "--build", "build/ci/host-tools", "--jobs", "2"], check=True)
+      - name: Actual loader ABI rejection and retry checks
+        if: runner.os == 'macOS'
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+          runtime = Path(os.environ["SNAPPAD_CI_RECUT"]) / "lib/N64ModernRuntime"
+          subprocess.run([sys.executable, "-B", "scripts/check-module-loader.py",
+                          "--runtime-root", str(runtime)], check=True)

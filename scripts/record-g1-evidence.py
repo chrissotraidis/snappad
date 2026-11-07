@@ -42,14 +42,13 @@ def artifact(path: Path) -> dict[str, object]:
     }
 
 
-def main() -> None:
-    subprocess.run([str(ROOT / "scripts/build-rom-hash-tool.sh")], check=True)
+def record(normalized: Path, rebuilt: Path, decomp: Path, output: Path,
+           rom_hash_tool: Path, generator=GENERATOR) -> None:
+    """Record the same exact-rebuild gate using explicitly prepared local tools."""
     lock = json.loads((ROOT / "dependencies.lock.json").read_text(encoding="utf-8"))
-    normalized = ROOT / "generated/rom/pokemonsnap.z64"
-    rebuilt = ROOT / "ref/pokemonsnap/build/pokemonsnap.z64"
-    elf = GENERATOR.ELF
-    linker_map = GENERATOR.MAP
-    for path in (normalized, rebuilt, elf, linker_map, GENERATOR.READELF):
+    elf = generator.ELF
+    linker_map = generator.MAP
+    for path in (normalized, rebuilt, elf, linker_map, generator.READELF):
         if not path.is_file() or path.stat().st_size == 0:
             raise SystemExit(f"error: missing G1 artifact: {path}")
 
@@ -59,7 +58,7 @@ def main() -> None:
     if normalized_sha1 != expected_sha1 or rebuilt_sha1 != expected_sha1:
         raise SystemExit("error: normalized/rebuilt ROM does not match the locked SHA-1")
     rom_xxh3 = subprocess.run(
-        [str(ROM_HASH_TOOL), str(normalized)],
+        [str(rom_hash_tool), str(normalized)],
         check=True,
         capture_output=True,
         text=True,
@@ -67,16 +66,16 @@ def main() -> None:
     if re.fullmatch(r"0x[0-9A-F]{16}", rom_xxh3) is None:
         raise SystemExit(f"error: invalid ROM XXH3 output: {rom_xxh3!r}")
 
-    sections = GENERATOR.read_sections()
-    symbols = GENERATOR.read_symbols()
-    entrypoint = GENERATOR.derive_entrypoint(symbols)
-    header = GENERATOR.run_readelf("-h")
+    sections = generator.read_sections()
+    symbols = generator.read_symbols()
+    entrypoint = generator.derive_entrypoint(symbols)
+    header = generator.run_readelf("-h")
     header_match = re.search(r"Entry point address:\s*(0x[0-9a-fA-F]+)", header)
     if header_match is None:
         raise SystemExit("error: ELF header entrypoint disappeared")
 
     revision = subprocess.run(
-        ["git", "-C", str(ROOT / "ref/pokemonsnap"), "rev-parse", "HEAD"],
+        ["git", "-C", str(decomp), "rev-parse", "HEAD"],
         check=True,
         capture_output=True,
         text=True,
@@ -103,10 +102,16 @@ def main() -> None:
         "elfSymbolCount": len(symbols),
         "exactRebuild": True,
     }
-    output = ROOT / "generated/evidence/G1.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote verified G1 evidence: {output} (entrypoint 0x{entrypoint:08X})")
+
+
+def main() -> None:
+    subprocess.run([str(ROOT / "scripts/build-rom-hash-tool.sh")], check=True)
+    record(ROOT / "generated/rom/pokemonsnap.z64",
+           ROOT / "ref/pokemonsnap/build/pokemonsnap.z64", ROOT / "ref/pokemonsnap",
+           ROOT / "generated/evidence/G1.json", ROM_HASH_TOOL)
 
 
 if __name__ == "__main__":

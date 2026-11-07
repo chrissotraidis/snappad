@@ -28,6 +28,8 @@ This repository contains integration source, patches, scripts, and documentation
 > [!IMPORTANT]
 > **Build your own copy with [PadMint](https://github.com/chrissotraidis/padmint/releases/latest) 0.5.5 or newer.** On an Apple Silicon Mac with Xcode, choose **Pokémon Snap**, then **iPhone or iPad** or **This Mac**, and give PadMint your own legally obtained, unmodified Pokémon Snap (USA) ROM. PadMint checks and decompiles it privately on your Mac; there is no public SnapPad IPA. Install over an existing SnapPad to keep your saves. SnapPad does not need JIT and never downloads game data.
 
+Public SnapPad binary downloads are paused. The existing Mac PadMint recipe builds a personal copy from your own supported ROM; it does not download a playable SnapPad archive.
+
 What is already here:
 
 - a native, JIT-free ARM64 app for iOS, iPadOS, and Apple Silicon macOS;

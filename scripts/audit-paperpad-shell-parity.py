@@ -306,6 +306,19 @@ def normalize_diagnostics(text: str) -> str:
 
 def normalize_info_plist(text: str) -> str:
     text = common_substitutions(text)
+    # The existing iOS 27 startup repair declares one UIKit scene; preserve
+    # that product requirement when comparing the older PaperPad reference.
+    text = text.replace(
+        '    <key>UIApplicationSupportsIndirectInputEvents</key>\n'
+        '    <true/>\n',
+        '    <key>UIApplicationSupportsIndirectInputEvents</key>\n'
+        '    <true/>\n'
+        '    <key>UIApplicationSceneManifest</key>\n'
+        '    <dict>\n'
+        '        <key>UIApplicationSupportsMultipleScenes</key>\n'
+        '        <false/>\n'
+        '    </dict>\n',
+    )
     return text.replace(
         '    <key>LSRequiresIPhoneOS</key>\n'
         '    <true/>\n',
@@ -344,10 +357,10 @@ def assert_equal(label: str, expected: str, actual: str) -> None:
     raise SystemExit(f"error: unintended PaperPad shell drift in {label}:\n{difference}")
 
 
-# The substantial native gyro extension is easier to review as one pinned
-# unified difference than as a long sequence of reverse-normalization rules.
+# The native gyro extension and opt-in module startup gate are reviewed as one
+# pinned difference rather than a long sequence of reverse-normalization rules.
 IOS_MAIN_AUDITED_DIFF_SHA256 = (
-    "1da56621b6458c0a582717173eaa90853bbef1ff92b46aa539d1c1defafc1757"
+    "c52ca6a976e220f08535f4138cc3ada3ea7e447080999b2af9cc518e29cc9755"
 )
 
 

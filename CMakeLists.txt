@@ -21,6 +21,10 @@ set(DEVELOPMENT_TEAM "" CACHE STRING
     "Apple development team used for signed iPhoneOS builds")
 set(SNAPPAD_GENERATED_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/generated" CACHE PATH
     "Root containing evidence-verified ROM-derived build products")
+set(SNAPPAD_RECUT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/ref/paper-mario-recut" CACHE PATH
+    "Pinned ReCut source with the reviewed patch stack")
+set(SNAPPAD_SDL2_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2" CACHE PATH "Pinned SDL2 source")
+set(SNAPPAD_ZSTD_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/ref/zstd" CACHE PATH "Pinned zstd source")
 
 get_filename_component(SNAPPAD_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
 add_compile_options(
@@ -44,7 +48,7 @@ if(BUILD_TESTING)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
     set(SNAPPAD_RUNTIME_ROOT
-        "${CMAKE_CURRENT_SOURCE_DIR}/ref/paper-mario-recut/lib/N64ModernRuntime")
+        "${SNAPPAD_RECUT_ROOT}/lib/N64ModernRuntime")
     add_library(snappad_overlay_registration_syntax OBJECT
         port/runtime/register_overlays.cpp)
     target_include_directories(snappad_overlay_registration_syntax PRIVATE
@@ -199,15 +203,40 @@ if(BUILD_TESTING)
     add_test(NAME snappad_filter_decomp_defined_symbols
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tests/filter_decomp_defined_symbols_test.py")
+    add_test(NAME snappad_module_contract
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/module_contract_test.py")
+    add_test(NAME snappad_module_generation
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/module_generation_test.py")
+    add_test(NAME snappad_windows_module_build
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/windows_module_build_test.py")
+    if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        add_test(NAME snappad_module_loader
+            COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check-module-loader.py"
+                --runtime-root "${SNAPPAD_RUNTIME_ROOT}")
+    endif()
 endif()
 
 option(SNAPPAD_BUILD_SHELL_PREVIEW "Build the ROM-free iOS shell preview" OFF)
 option(SNAPPAD_BUILD_GENERATED_CORE "Compile verified generated game/RSP sources and native glue" OFF)
 option(SNAPPAD_BUILD_RUNTIME_STACK "Compile the ROM-free native runtime and RT64 stack" OFF)
 option(SNAPPAD_BUILD_NATIVE_APP "Link the verified generated core into the macOS app" OFF)
+option(SNAPPAD_BUILD_MODULE_SHELL "Build the empty iOS runtime for a private game module" OFF)
+
+if(SNAPPAD_BUILD_MODULE_SHELL)
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        message(FATAL_ERROR "The module shell is an iOS application")
+    endif()
+    set(SNAPPAD_BUILD_NATIVE_APP ON)
+    set(SNAPPAD_BUILD_GENERATED_CORE OFF)
+endif()
 
 if(SNAPPAD_BUILD_NATIVE_APP)
-    set(SNAPPAD_BUILD_GENERATED_CORE ON CACHE BOOL "Compile generated core" FORCE)
+    if(NOT SNAPPAD_BUILD_MODULE_SHELL)
+        set(SNAPPAD_BUILD_GENERATED_CORE ON CACHE BOOL "Compile generated core" FORCE)
+    endif()
     set(SNAPPAD_BUILD_RUNTIME_STACK ON CACHE BOOL "Compile native runtime stack" FORCE)
 endif()
 
@@ -216,14 +245,12 @@ if(SNAPPAD_BUILD_RUNTIME_STACK)
         message(FATAL_ERROR "The current SnapPad runtime-stack rung supports Apple targets only")
     endif()
 
-    set(SNAPPAD_RECUT_ROOT
-        "${CMAKE_CURRENT_SOURCE_DIR}/ref/paper-mario-recut")
     set(SNAPPAD_RUNTIME_ROOT
         "${SNAPPAD_RECUT_ROOT}/lib/N64ModernRuntime")
     set(SNAPPAD_RENDERER_ROOT
         "${SNAPPAD_RECUT_ROOT}/lib/rt64")
     set(PAPERPAD_ZSTD_SOURCE_DIR
-        "${CMAKE_CURRENT_SOURCE_DIR}/ref/zstd"
+        "${SNAPPAD_ZSTD_ROOT}"
         CACHE PATH "Complete pinned zstd source" FORCE)
     # Match the reviewed PaperPad/ReCut Apple runtime profile without bringing
     # any generated Pokemon Snap bytes into this ROM-free compile rung.
@@ -247,8 +274,8 @@ if(SNAPPAD_BUILD_RUNTIME_STACK)
         set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
         set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
         set(SDL_TEST OFF CACHE BOOL "Build SDL tests" FORCE)
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2" "${CMAKE_BINARY_DIR}/sdl2")
-        set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2/include")
+        add_subdirectory("${SNAPPAD_SDL2_ROOT}" "${CMAKE_BINARY_DIR}/sdl2")
+        set(SDL2_INCLUDE_DIRS "${SNAPPAD_SDL2_ROOT}/include")
         set(SDL2_LIBRARIES SDL2::SDL2-static)
     else()
         set(SNAPPAD_SDL2_STATIC_DIR
@@ -258,7 +285,7 @@ if(SNAPPAD_BUILD_RUNTIME_STACK)
             message(FATAL_ERROR
                 "Missing pinned native SDL2 archive. Run scripts/build-sdl2.sh first.")
         endif()
-        set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2/include")
+        set(SDL2_INCLUDE_DIRS "${SNAPPAD_SDL2_ROOT}/include")
         set(SDL2_LIBRARIES "${SNAPPAD_SDL2_STATIC_DIR}/libSDL2.a")
     endif()
     add_compile_definitions(HLSL_CPU)
@@ -293,7 +320,7 @@ if(SNAPPAD_BUILD_RUNTIME_STACK)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/runtime"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/apple"
-        "${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2/include"
+        "${SNAPPAD_SDL2_ROOT}/include"
         "${SNAPPAD_RUNTIME_ROOT}/ultramodern/include"
         "${SNAPPAD_RUNTIME_ROOT}/librecomp/include"
         "${SNAPPAD_RUNTIME_ROOT}/N64Recomp/include"
@@ -319,7 +346,7 @@ if(SNAPPAD_BUILD_RUNTIME_STACK)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/runtime"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/apple"
-        "${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2/include"
+        "${SNAPPAD_SDL2_ROOT}/include"
         "${SNAPPAD_RUNTIME_ROOT}/ultramodern/include"
         "${SNAPPAD_RUNTIME_ROOT}/librecomp/include"
         "${SNAPPAD_RUNTIME_ROOT}/N64Recomp/include"
@@ -332,16 +359,24 @@ if(SNAPPAD_BUILD_RUNTIME_STACK)
     endif()
 endif()
 
-if(SNAPPAD_BUILD_GENERATED_CORE)
+if(SNAPPAD_BUILD_GENERATED_CORE OR SNAPPAD_BUILD_MODULE_SHELL)
     set(SNAPPAD_RUNTIME_ROOT
-        "${CMAKE_CURRENT_SOURCE_DIR}/ref/paper-mario-recut/lib/N64ModernRuntime")
+        "${SNAPPAD_RECUT_ROOT}/lib/N64ModernRuntime")
     set(SNAPPAD_RECOMP_OUT
         "${SNAPPAD_GENERATED_ROOT}/aot/snappad_recomp_out")
     set(SNAPPAD_AUDIO_RSP_SOURCE
         "${SNAPPAD_GENERATED_ROOT}/aot/rsp/aspMain.cpp")
     set(SNAPPAD_GAME_METADATA
         "${SNAPPAD_GENERATED_ROOT}/aot/snappad_game_metadata.h")
+    set(SNAPPAD_RUNTIME_INCLUDE_DIRS
+        "${SNAPPAD_RUNTIME_ROOT}/ultramodern/include"
+        "${SNAPPAD_RUNTIME_ROOT}/librecomp/include"
+        "${SNAPPAD_RUNTIME_ROOT}/N64Recomp/include"
+        "${SNAPPAD_RUNTIME_ROOT}/thirdparty"
+        "${SNAPPAD_RUNTIME_ROOT}/thirdparty/concurrentqueue"
+        "${SNAPPAD_RUNTIME_ROOT}/thirdparty/sse2neon")
 
+    if(NOT SNAPPAD_BUILD_MODULE_SHELL)
     foreach(required_path
         "${SNAPPAD_RECOMP_OUT}/lookup.cpp"
         "${SNAPPAD_RECOMP_OUT}/recomp_overlays.inl"
@@ -361,14 +396,6 @@ if(SNAPPAD_BUILD_GENERATED_CORE)
         message(FATAL_ERROR "No generated N64Recomp sources found in ${SNAPPAD_RECOMP_OUT}")
     endif()
 
-    set(SNAPPAD_RUNTIME_INCLUDE_DIRS
-        "${SNAPPAD_RUNTIME_ROOT}/ultramodern/include"
-        "${SNAPPAD_RUNTIME_ROOT}/librecomp/include"
-        "${SNAPPAD_RUNTIME_ROOT}/N64Recomp/include"
-        "${SNAPPAD_RUNTIME_ROOT}/thirdparty"
-        "${SNAPPAD_RUNTIME_ROOT}/thirdparty/concurrentqueue"
-        "${SNAPPAD_RUNTIME_ROOT}/thirdparty/sse2neon")
-
     add_library(snappad_recompiled_funcs STATIC ${SNAPPAD_RECOMP_SOURCES})
     target_compile_options(snappad_recompiled_funcs PRIVATE
         -fno-strict-aliasing
@@ -380,21 +407,31 @@ if(SNAPPAD_BUILD_GENERATED_CORE)
         "${SNAPPAD_RECOMP_OUT}"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/runtime"
         ${SNAPPAD_RUNTIME_INCLUDE_DIRS})
+    endif()
 
     add_library(snappad_generated_core STATIC
         port/runtime/game_registration.cpp
         port/runtime/n64_input_policy.cpp
-        port/runtime/n64_os_stubs.cpp
-        port/runtime/register_overlays.cpp
-        port/runtime/snappad_game_hooks.cpp
-        "${SNAPPAD_AUDIO_RSP_SOURCE}")
+        port/runtime/n64_os_stubs.cpp)
     target_include_directories(snappad_generated_core PRIVATE
-        "${SNAPPAD_GENERATED_ROOT}/aot"
-        "${SNAPPAD_RECOMP_OUT}"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/runtime"
         ${SNAPPAD_RUNTIME_INCLUDE_DIRS})
-    target_link_libraries(snappad_generated_core PRIVATE
-        snappad_input snappad_recompiled_funcs)
+    target_link_libraries(snappad_generated_core PRIVATE snappad_input)
+    if(SNAPPAD_BUILD_MODULE_SHELL)
+        include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ModuleIdentity.cmake")
+        snappad_module_identity("${CMAKE_CURRENT_SOURCE_DIR}" identity)
+        target_sources(snappad_generated_core PRIVATE port/runtime/game_module_loader.cpp)
+        target_compile_definitions(snappad_generated_core PUBLIC
+            SNAPPAD_USE_GAME_MODULE=1 "SNAPPAD_MODULE_ID=\"${identity}\"")
+    else()
+        target_sources(snappad_generated_core PRIVATE
+            port/runtime/register_overlays.cpp
+            port/runtime/snappad_game_hooks.cpp
+            "${SNAPPAD_AUDIO_RSP_SOURCE}")
+        target_include_directories(snappad_generated_core PRIVATE
+            "${SNAPPAD_GENERATED_ROOT}/aot" "${SNAPPAD_RECOMP_OUT}")
+        target_link_libraries(snappad_generated_core PRIVATE snappad_recompiled_funcs)
+    endif()
 endif()
 
 if(SNAPPAD_BUILD_NATIVE_APP)
@@ -405,11 +442,9 @@ if(SNAPPAD_BUILD_NATIVE_APP)
         port/runtime/address_translation.cpp
         port/apple/snappad_paths.mm)
     target_include_directories(SnapPad PRIVATE
-        "${SNAPPAD_GENERATED_ROOT}/aot"
-        "${SNAPPAD_RECOMP_OUT}"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/runtime"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/apple"
-        "${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2/include"
+        "${SNAPPAD_SDL2_ROOT}/include"
         ${SNAPPAD_RUNTIME_INCLUDE_DIRS}
         "${SNAPPAD_RENDERER_ROOT}/src/contrib"
         "${SNAPPAD_RENDERER_ROOT}/src/contrib/hlslpp/include"
@@ -419,6 +454,16 @@ if(SNAPPAD_BUILD_NATIVE_APP)
         "${CMAKE_BINARY_DIR}/rt64/src")
     target_link_libraries(SnapPad PRIVATE
         snappad_generated_core snappad_input snappad_runtime_stack)
+    if(SNAPPAD_BUILD_MODULE_SHELL)
+        # These libraries also contain callbacks used only by the private module.
+        target_link_options(SnapPad PRIVATE "LINKER:-export_dynamic"
+            "LINKER:-force_load,$<TARGET_FILE:librecomp>"
+            "LINKER:-force_load,$<TARGET_FILE:ultramodern>"
+            "LINKER:-force_load,$<TARGET_FILE:snappad_generated_core>")
+    else()
+        target_include_directories(SnapPad PRIVATE
+            "${SNAPPAD_GENERATED_ROOT}/aot" "${SNAPPAD_RECOMP_OUT}")
+    endif()
     if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
         target_sources(SnapPad PRIVATE
             port/apple/ios_main.mm
@@ -466,7 +511,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS" AND SNAPPAD_BUILD_SHELL_PREVIEW)
     set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
     set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
     set(SDL_TEST OFF CACHE BOOL "Build SDL tests" FORCE)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2" "${CMAKE_BINARY_DIR}/sdl2")
+    add_subdirectory("${SNAPPAD_SDL2_ROOT}" "${CMAKE_BINARY_DIR}/sdl2")
 
     add_executable(SnapPadShell
         port/apple/ios_main.mm
@@ -483,7 +528,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS" AND SNAPPAD_BUILD_SHELL_PREVIEW)
     target_include_directories(SnapPadShell PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/port/apple"
         "${CMAKE_CURRENT_SOURCE_DIR}/port/runtime"
-        "${CMAKE_CURRENT_SOURCE_DIR}/ref/SDL2/include")
+        "${SNAPPAD_SDL2_ROOT}/include")
     target_link_libraries(SnapPadShell PRIVATE
         SDL2::SDL2main SDL2::SDL2-static
         "-framework UIKit -framework Metal -framework QuartzCore -framework CoreGraphics -framework Foundation -framework UniformTypeIdentifiers")

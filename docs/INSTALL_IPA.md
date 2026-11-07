@@ -1,10 +1,11 @@
 # Install SnapPad on iPhone or iPad
 
 > [!IMPORTANT]
-> **Public downloads are paused.** Previous IPAs are retired; there is
-> no current public SnapPad IPA or PadMint release recipe. Keep your existing
-> installation and saves. The steps below are for a personal IPA you built
-> yourself, not a download available from this page.
+> **Public SnapPad binary downloads are paused.** Previous IPAs are retired;
+> there is no current public SnapPad IPA. The existing PadMint recipe builds a
+> personal copy on an Apple Silicon Mac with Xcode and your own supported ROM.
+> Keep your existing installation and saves. The steps below are for a personal
+> IPA you built yourself, not a download available from this page.
 
 [Private source-build instructions](../README.md#build-from-source) require a
 Mac and your own supported ROM. Keep the personal build and game files private.

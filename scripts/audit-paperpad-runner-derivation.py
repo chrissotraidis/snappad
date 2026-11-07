@@ -49,7 +49,11 @@ def render_expected(source: str) -> str:
         '#include "n64_input_policy.h"\n'
         '#include "register_overlays.h"\n'
         '#include "snappad_game_hooks.h"\n'
-        '#include "snappad_game_metadata.h"',
+        '#if defined(SNAPPAD_USE_GAME_MODULE)\n'
+        '#include "game_module.h"\n'
+        '#else\n'
+        '#include "snappad_game_metadata.h"\n'
+        '#endif',
         "SnapPad runtime includes",
     )
     source = replace_required(
@@ -393,12 +397,22 @@ def render_expected(source: str) -> str:
     registration_end = source.find("\n\n    recomp::register_config_path", registration_start)
     if registration_start < 0 or registration_end < 0:
         fail("Paper Mario game registration block could not be isolated")
-    registration = """    std::u8string game_id = pokemon_snap::generated::game_id;
+    registration = """#if defined(SNAPPAD_USE_GAME_MODULE)
+    const auto rom_xxh3 = game_module->rom_xxh3;
+    const auto entrypoint = game_module->entrypoint_address;
+    const auto internal_name = game_module->internal_name;
+    std::u8string game_id = game_module->game_id;
+#else
+    const auto rom_xxh3 = pokemon_snap::generated::rom_xxh3;
+    const auto entrypoint = pokemon_snap::generated::entrypoint;
+    const auto internal_name = pokemon_snap::generated::internal_name;
+    std::u8string game_id = pokemon_snap::generated::game_id;
+#endif
     recomp::GameEntry pokemon_snap_us = pokemon_snap::make_game_entry(
-        pokemon_snap::generated::rom_xxh3,
-        pokemon_snap::generated::internal_name,
+        rom_xxh3,
+        internal_name,
         game_id,
-        pokemon_snap::generated::entrypoint,
+        entrypoint,
         recomp_entrypoint);"""
     source = source[:registration_start] + registration + source[registration_end:]
     source = replace_required(source, "recomp::register_game(paper_mario_us);", "recomp::register_game(pokemon_snap_us);", "game registration call")
@@ -409,8 +423,7 @@ def render_expected(source: str) -> str:
         """    recomp::register_game(pokemon_snap_us);
     std::fprintf(stderr,
         "[core] registered Pokémon Snap US: xxh3=%016llX entrypoint=0x%08X save=flashram\\n",
-        static_cast<unsigned long long>(pokemon_snap::generated::rom_xxh3),
-        pokemon_snap::generated::entrypoint);
+        static_cast<unsigned long long>(rom_xxh3), entrypoint);
     pokemon_snap::register_overlays();""",
         "core registration breadcrumb",
     )
@@ -1019,6 +1032,13 @@ def render_expected(source: str) -> str:
     setvbuf(stderr, nullptr, _IONBF, 0);""",
         """int PAPERPAD_MAIN(int argc, char** argv) {
     setvbuf(stderr, nullptr, _IONBF, 0);
+#if defined(SNAPPAD_USE_GAME_MODULE)
+    const auto* game_module = snappad_game_module();
+    if (!game_module) {
+        std::fprintf(stderr, "SnapPad needs a matching private game module before starting.\\n");
+        return EXIT_FAILURE;
+    }
+#endif
     initialize_performance_telemetry();
     if (!initialize_test_input_replay()) {
         return EXIT_FAILURE;

@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+import subprocess
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,5 +50,35 @@ assert "-T build/filtered.txt -Map" in patched
 assert MODULE.inject_filtered_script(
     patched, "undefined_syms_auto.txt", "build/filtered.txt"
 ) == patched
+
+# A real decomp's hundreds of absolute Windows object paths exceed CreateProcess.
+# Exercise the complete collector with spaced and non-BMP paths and check that
+# every definition survives, including the final short batch.
+objects = [PureWindowsPath("V:/work with spaces/\U0001f9ea/" + "nested/" * 20 + f"file{i}.o")
+           for i in range(1200)]
+visited = []
+def fake_nm(command, **kwargs):
+    assert len(subprocess.list2cmdline(command).encode("utf-16-le")) // 2 + 1 <= 16000
+    assert kwargs["check"] and kwargs["capture_output"] and kwargs["text"]
+    visited.extend(command[3:])
+    lines = []
+    for item in command[3:]:
+        stem = PureWindowsPath(item).stem
+        lines.extend((f"00000000 T code_{stem}", f"00000004 D data_{stem}"))
+    return subprocess.CompletedProcess(command, 0, "\n".join(lines), "")
+
+with mock.patch.object(MODULE.subprocess, "run", side_effect=fake_nm) as run:
+    all_defined, all_text = MODULE.collect_defined_symbols(Path("nm tool"), objects)
+    assert run.call_count > 1
+assert visited == list(map(str, objects))
+assert all_text == {f"code_file{i}" for i in range(1200)}
+assert all_defined == all_text | {f"data_file{i}" for i in range(1200)}
+with mock.patch.object(MODULE.subprocess, "run", side_effect=subprocess.CalledProcessError(2, "nm")):
+    try:
+        MODULE.collect_defined_symbols(Path("nm"), [Path("object.o")])
+    except subprocess.CalledProcessError:
+        pass
+    else:
+        raise AssertionError("nm failure was ignored")
 
 print("decomp defined-symbol filtering contract passed")

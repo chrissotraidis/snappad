@@ -9,7 +9,10 @@ The final ROM checksum remains the authority on whether the recovery is exact.
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import shlex
+import subprocess
 from pathlib import Path
 
 
@@ -65,13 +68,18 @@ def render_linker_script(symbols: dict[str, int]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def inject_linker_script(ninja_text: str, linker_script: str) -> str:
-    replacement = LD_COMMAND + f"-T {linker_script} "
+def inject_linker_script(ninja_text: str, linker_script: str,
+                         linker: str = "mips-linux-gnu-ld") -> str:
+    # Match the exact selected executable, including Ninja and host quoting.
+    literal = linker.replace("$", "$$")
+    quoted = subprocess.list2cmdline([literal]) if os.name == "nt" else shlex.quote(literal)
+    command = f"command = {quoted} -T undefined_syms.txt -T undefined_syms_auto.txt "
+    replacement = command + f"-T {linker_script} "
+    if ninja_text.count(command) != 1:
+        raise ValueError("could not identify the unique pinned decomp link rule")
     if replacement in ninja_text:
         return ninja_text
-    if ninja_text.count(LD_COMMAND) != 1:
-        raise ValueError("could not identify the unique pinned decomp link rule")
-    return ninja_text.replace(LD_COMMAND, replacement, 1)
+    return ninja_text.replace(command, replacement, 1)
 
 
 def main() -> int:
@@ -79,6 +87,7 @@ def main() -> int:
     parser.add_argument("--log", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--build-ninja", type=Path, required=True)
+    parser.add_argument("--linker", default="mips-linux-gnu-ld")
     args = parser.parse_args()
 
     symbols = recover(args.log.read_text(errors="replace"))
@@ -87,7 +96,7 @@ def main() -> int:
 
     ninja_text = args.build_ninja.read_text()
     linker_script = args.output.relative_to(args.build_ninja.parent).as_posix()
-    args.build_ninja.write_text(inject_linker_script(ninja_text, linker_script))
+    args.build_ninja.write_text(inject_linker_script(ninja_text, linker_script, args.linker))
     print(f"Recovered {len(symbols)} strictly address-backed linker symbols.")
     return 0
 
