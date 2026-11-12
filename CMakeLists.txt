@@ -450,12 +450,18 @@ if(SNAPPAD_BUILD_NATIVE_APP)
             # forcing an iPhone compatibility window on iPadOS.
             XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2")
     else()
+        # Ninja builds compile no asset catalogs, so the native app takes its
+        # icon from a committed .icns (regenerate with scripts/make-macos-icon.sh).
+        target_sources(SnapPad PRIVATE port/apple/AppIcon.icns)
+        set_source_files_properties(port/apple/AppIcon.icns
+            PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
         target_link_libraries(SnapPad PRIVATE
             "-framework AppKit -framework Metal -framework QuartzCore -framework CoreGraphics -framework Foundation -framework CoreVideo -framework IOKit -framework ForceFeedback -framework Carbon -framework AudioToolbox -framework CoreAudio -framework GameController -framework CoreHaptics")
         set_target_properties(SnapPad PROPERTIES
             MACOSX_BUNDLE TRUE
             MACOSX_BUNDLE_BUNDLE_NAME "SnapPad"
             MACOSX_BUNDLE_GUI_IDENTIFIER "com.chrissotraidis.snappad"
+            MACOSX_BUNDLE_ICON_FILE "AppIcon"
             MACOSX_BUNDLE_SHORT_VERSION_STRING "${SNAPPAD_VERSION}"
             MACOSX_BUNDLE_BUNDLE_VERSION "${SNAPPAD_BUILD_NUMBER}")
     endif()

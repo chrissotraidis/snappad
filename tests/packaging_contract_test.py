@@ -51,6 +51,12 @@ def main() -> None:
     require(ios_audit, 'CFBundleIconName)" == "AppIcon"', "Simulator icon metadata check")
     require(ios_audit, 'AppIcon76x76@2x~ipad.png', "Simulator iPad icon check")
     require(cmake, 'XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"', "CMake icon catalog wiring")
+    require(cmake, 'MACOSX_BUNDLE_ICON_FILE "AppIcon"', "native macOS app icon metadata")
+    require(cmake, 'port/apple/AppIcon.icns', "native macOS app icon resource")
+    require(app_audit, 'CFBundleIconFile', "native macOS app icon check")
+    icns = ROOT / "port/apple/AppIcon.icns"
+    if not icns.is_file() or icns.read_bytes()[:4] != b"icns":
+        raise SystemExit("native macOS app icon missing or not an .icns: port/apple/AppIcon.icns")
     for suffix in ("z64", "n64", "v64", "elf", "map"):
         require(ios_audit, suffix, "forbidden Simulator package input")
     require(ipa_package, 'RIGHTS_AND_LICENSES.md', "IPA rights notice")
