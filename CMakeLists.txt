@@ -63,6 +63,11 @@ if(BUILD_TESTING)
     target_link_libraries(snappad_touch_tap_latch_test PRIVATE snappad_input)
     add_test(NAME snappad_touch_tap_latch COMMAND snappad_touch_tap_latch_test)
 
+    add_executable(snappad_touch_visibility_test
+        tests/touch_visibility_test.cpp)
+    target_link_libraries(snappad_touch_visibility_test PRIVATE snappad_input)
+    add_test(NAME snappad_touch_visibility COMMAND snappad_touch_visibility_test)
+
     add_executable(snappad_gyro_input_policy_test
         tests/gyro_input_policy_test.cpp)
     target_link_libraries(snappad_gyro_input_policy_test PRIVATE snappad_input)
