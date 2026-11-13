@@ -219,7 +219,7 @@ SnapPad retains PaperPad's complete native N64 overlay and interaction model. Ph
 - **Diagnostics:** create a reviewable text report through the system share sheet.
 - **ROM management:** replace or remove the privately stored supported ROM.
 
-Opening the menu, Settings, share sheet, or ROM picker clears held input, pauses gyro sampling, and hides gameplay targets. Dismissing the sheet restores them only when Touch Controls is enabled. A physical controller pauses gyro sampling and hides gameplay touch targets while keeping the menu available, then restores the prior touch/gyro state after disconnect.
+Opening the menu, Settings, share sheet, or ROM picker clears held input, pauses gyro sampling, and hides gameplay targets. Dismissing the sheet restores them only when Touch Controls is enabled. A usable physical controller on Player 1 (left stick plus A, B and Start) pauses gyro sampling and hides gameplay touch targets while keeping the menu available, then restores the prior touch/gyro state after disconnect. Settings → **Auto-hide Touch Controls with Controller** controls this; it is on until you turn it off. While the targets are hidden, the menu offers **Show Touch Controls**, which restores working touch and gyro input with the controller still connected and turns auto-hide off.
 
 ### Keyboard and controller bindings
 

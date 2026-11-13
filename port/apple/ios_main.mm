@@ -18,6 +18,7 @@
 #include "diagnostics.h"
 #include "gyro_input_policy.h"
 #include "touch_tap_latch.h"
+#include "touch_visibility.h"
 #include "snappad_input.h"
 
 extern "C" int snappad_recomp_main(int argc, char** argv);
@@ -32,6 +33,7 @@ extern "C" int snappad_recomp_main(int argc, char** argv);
 namespace {
 
 std::atomic<uint16_t> g_touch_buttons{0};
+// True when a usable physical controller owns Player 1, the player touch drives.
 std::atomic_bool g_physical_controller_connected{false};
 static SnapPadTouchOverlayView* g_touch_overlay = nullptr;
 SnapPadTouchTapLatch g_touch_taps;
@@ -188,6 +190,8 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
 - (void)resetLayout;
 - (void)presentSupportMenuFrom:(UIViewController*)presenter;
 - (void)setGameplayControlsEnabled:(BOOL)enabled opacity:(CGFloat)opacity;
+- (void)setAutoHideWithController:(BOOL)enabled;
+- (void)showTouchControls;
 - (void)setPhysicalControllerConnected:(BOOL)connected;
 - (void)setModalControlsHidden:(BOOL)hidden;
 - (void)setGyroFeatureEnabled:(BOOL)enabled;
@@ -210,8 +214,7 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
     BOOL _undoDPadLinked;
     BOOL _undoCButtonsLinked;
     NSInteger _selected;
-    BOOL _gameplayControlsEnabled;
-    BOOL _physicalControllerConnected;
+    SnapPadTouchVisibility _visibility;
     BOOL _modalControlsHidden;
     BOOL _gyroFeatureEnabled;
     BOOL _gyroActive;
@@ -233,7 +236,6 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
         self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         _controls = defaultControls();
         _selected = 9;
-        _gameplayControlsEnabled = YES;
         _globalOpacity = 0.70;
         _gyroSensitivity = snappad::kDefaultGyroSensitivity;
         _motionManager = [[CMMotionManager alloc] init];
@@ -480,8 +482,7 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
         const TouchControl& control = _controls[index];
         if ([self isGyroControl:control] && !_gyroFeatureEnabled) continue;
         if (!_editing && control.kind == ControlKind::Stick && _gyroActive) continue;
-        if (!_editing && (!_gameplayControlsEnabled || _physicalControllerConnected ||
-                          _modalControlsHidden)) continue;
+        if (!_editing && ![self gameplayControlsLive]) continue;
         if (!control.visible && !_editing) continue;
         CGPoint center = [self centerForControl:control];
         CGFloat radius = [self radiusForControl:control];
@@ -570,8 +571,7 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
 }
 
 - (NSInteger)controlAtPoint:(CGPoint)point includeHidden:(BOOL)includeHidden {
-    if (!_editing && (!_gameplayControlsEnabled || _physicalControllerConnected ||
-                      _modalControlsHidden)) return NSNotFound;
+    if (!_editing && ![self gameplayControlsLive]) return NSNotFound;
     NSInteger nearest = NSNotFound;
     CGFloat nearestDistance = CGFLOAT_MAX;
     for (NSInteger index = 0; index < (NSInteger)kControlCount; ++index) {
@@ -603,8 +603,7 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
 
 - (void)updateGyroMotionState {
     const BOOL shouldRun = _gyroFeatureEnabled && _gyroActive &&
-        _gameplayControlsEnabled && !_physicalControllerConnected &&
-        !_modalControlsHidden && !_editing &&
+        [self gameplayControlsLive] && !_editing &&
         UIApplication.sharedApplication.applicationState == UIApplicationStateActive &&
         _motionManager.deviceMotionAvailable;
     if (!shouldRun) {
@@ -699,6 +698,14 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
         [UIAlertController alertControllerWithTitle:@"SnapPad"
                                             message:nil
                                      preferredStyle:UIAlertControllerStyleActionSheet];
+    if (!_visibility.gameplayVisible()) {
+        [menu addAction:[UIAlertAction actionWithTitle:@"Show Touch Controls"
+                                                 style:UIAlertActionStyleDefault
+                                               handler:^(__unused UIAlertAction* action) {
+            [self setModalControlsHidden:NO];
+            [self showTouchControls];
+        }]];
+    }
     [menu addAction:[UIAlertAction actionWithTitle:@"Settings"
                                              style:UIAlertActionStyleDefault
                                            handler:^(__unused UIAlertAction* action) {
@@ -926,19 +933,47 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
 }
 
 - (void)setGameplayControlsEnabled:(BOOL)enabled opacity:(CGFloat)opacity {
-    _gameplayControlsEnabled = enabled;
     _globalOpacity = MAX(0.20, MIN(1.0, opacity));
     _utilityButton.alpha = MAX(0.55, _globalOpacity);
-    if (!enabled) [self clearInput];
+    SnapPadTouchVisibility next = _visibility;
+    next.enabled = enabled;
+    [self applyVisibility:next];
+}
+
+- (BOOL)gameplayControlsLive {
+    return _visibility.gameplayVisible() && !_modalControlsHidden;
+}
+
+- (void)applyVisibility:(SnapPadTouchVisibility)visibility {
+    const bool wasVisible = _visibility.gameplayVisible();
+    _visibility = visibility;
+    // Hidden controls must not keep a held button, stick, gyro aim or tap alive.
+    if (wasVisible && !_visibility.gameplayVisible() && !_editing) [self clearInput];
     [self updateGyroMotionState];
     [self setNeedsDisplay];
 }
 
+- (void)setAutoHideWithController:(BOOL)enabled {
+    SnapPadTouchVisibility next = _visibility;
+    next.autoHide = enabled;
+    [self applyVisibility:next];
+}
+
+- (void)showTouchControls {
+    SnapPadTouchVisibility next = _visibility;
+    next.show();
+    [self applyVisibility:next];
+    NSMutableDictionary* settings = [NSMutableDictionary dictionaryWithDictionary:
+        [NSUserDefaults.standardUserDefaults dictionaryForKey:settingsDefaultsKey()] ?: @{}];
+    settings[@"touchControls"] = @YES;
+    settings[@"autoHideTouchControls"] = @NO;
+    [NSUserDefaults.standardUserDefaults setObject:settings forKey:settingsDefaultsKey()];
+}
+
 - (void)setPhysicalControllerConnected:(BOOL)connected {
-    _physicalControllerConnected = connected;
-    if (connected) [self clearInput];
-    [self updateGyroMotionState];
-    [self setNeedsDisplay];
+    SnapPadTouchVisibility next = _visibility;
+    next.controllerReady = connected;
+    [self applyVisibility:next];
 }
 
 - (void)moveSelectedToPoint:(CGPoint)point {
@@ -1063,8 +1098,7 @@ BOOL gyroInvertVerticalFromSettings(NSDictionary* settings) {
         CGPoint point = [touch locationInView:self];
         if ([self handleToolbarPoint:point]) continue;
         NSInteger control = [self controlAtPoint:point includeHidden:_editing];
-        if (!_editing && _gameplayControlsEnabled && !_physicalControllerConnected &&
-            !_modalControlsHidden && !_gyroActive &&
+        if (!_editing && [self gameplayControlsLive] && !_gyroActive &&
             control == NSNotFound &&
             point.x <= CGRectGetMinX([self usableBounds]) + [self usableBounds].size.width * 0.47) {
             control = 0;
@@ -1165,6 +1199,9 @@ extern "C" void snappad_touch_attach(void* window_pointer) {
             [settings[@"touchControls"] boolValue];
         CGFloat controlsOpacity = settings[@"touchOpacity"] == nil
             ? 0.70 : [settings[@"touchOpacity"] doubleValue];
+        [overlay setAutoHideWithController:SnapPadSavedAutoHide(
+            settings[@"autoHideTouchControls"] != nil,
+            [settings[@"autoHideTouchControls"] boolValue])];
         [overlay setGameplayControlsEnabled:controlsEnabled opacity:controlsOpacity];
         [overlay setGyroSensitivity:gyroSensitivityFromSettings(settings)
                    invertHorizontal:gyroInvertHorizontalFromSettings(settings)
@@ -1236,6 +1273,7 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
     NSTimer* _resolutionTimer;
     UISegmentedControl* _aspectControl;
     UISwitch* _touchControlsSwitch;
+    UISwitch* _autoHideSwitch;
     UISlider* _touchOpacitySlider;
     UILabel* _touchOpacityLabel;
     UISlider* _gyroSensitivitySlider;
@@ -1334,6 +1372,17 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
                    forControlEvents:UIControlEventValueChanged];
     [touchControlsRow addArrangedSubview:_touchControlsSwitch];
     [stack addArrangedSubview:touchControlsRow];
+
+    UIStackView* autoHideRow = [[UIStackView alloc] init];
+    autoHideRow.axis = UILayoutConstraintAxisHorizontal;
+    autoHideRow.alignment = UIStackViewAlignmentCenter;
+    [autoHideRow addArrangedSubview:[self label:@"Auto-hide Touch Controls with Controller"]];
+    _autoHideSwitch = [[UISwitch alloc] init];
+    _autoHideSwitch.accessibilityLabel = @"Auto-hide Touch Controls with Controller";
+    [_autoHideSwitch addTarget:self action:@selector(autoHideChanged:)
+              forControlEvents:UIControlEventValueChanged];
+    [autoHideRow addArrangedSubview:_autoHideSwitch];
+    [stack addArrangedSubview:autoHideRow];
 
     UIStackView* touchOpacityRow = [[UIStackView alloc] init];
     touchOpacityRow.axis = UILayoutConstraintAxisHorizontal;
@@ -1523,6 +1572,8 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
     NSInteger resolution = resolutionModeFromSettings(saved);
     NSInteger aspect = aspectModeFromSettings(saved);
     BOOL touchControls = saved[@"touchControls"] == nil || [saved[@"touchControls"] boolValue];
+    BOOL autoHide = SnapPadSavedAutoHide(saved[@"autoHideTouchControls"] != nil,
+                                         [saved[@"autoHideTouchControls"] boolValue]);
     float touchOpacity = saved[@"touchOpacity"] ? [saved[@"touchOpacity"] floatValue] : 0.70f;
     double gyroSensitivity = gyroSensitivityFromSettings(saved);
     _volumeSlider.value = volume * 100.0;
@@ -1530,6 +1581,7 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
     _resolutionControl.selectedSegmentIndex = resolution;
     _aspectControl.selectedSegmentIndex = aspect;
     _touchControlsSwitch.on = touchControls;
+    _autoHideSwitch.on = autoHide;
     _touchOpacitySlider.value = touchOpacity * 100.0f;
     _touchOpacityLabel.text = [NSString stringWithFormat:@"%d%%", (int)lround(touchOpacity * 100.0f)];
     _touchOpacitySlider.accessibilityValue = _touchOpacityLabel.text;
@@ -1550,6 +1602,7 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
         @"resolution": @(_resolutionControl.selectedSegmentIndex),
         @"aspect": @(_aspectControl.selectedSegmentIndex),
         @"touchControls": @(_touchControlsSwitch.isOn),
+        @"autoHideTouchControls": @(_autoHideSwitch.isOn),
         @"touchOpacity": @(_touchOpacitySlider.value / 100.0),
         @"gyroControls": @([previous[@"gyroControls"] boolValue]),
         @"gyroSensitivity": @(_gyroSensitivitySlider.value / 100.0),
@@ -1572,6 +1625,11 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
                                0);
     [self persist];
     [self refreshResolutionStatus];
+}
+
+- (void)autoHideChanged:(UISwitch*)control {
+    [g_touch_overlay setAutoHideWithController:control.isOn];
+    [self persist];
 }
 
 - (void)touchControlsChanged:(UISwitch*)control {
