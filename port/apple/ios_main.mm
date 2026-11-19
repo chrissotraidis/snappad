@@ -1698,7 +1698,10 @@ extern "C" void snappad_touch_snapshot(uint16_t* buttons, float* x, float* y) {
 
 extern "C" int SDL_main(int argc, char** argv) {
     @autoreleasepool {
-        SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+        SDL_SetHint(SDL_HINT_ORIENTATIONS,
+                    UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad
+                        ? "Portrait PortraitUpsideDown LandscapeLeft LandscapeRight"
+                        : "LandscapeLeft LandscapeRight");
         SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
         // Apply persisted settings before the game starts.
         NSDictionary* settings = [NSUserDefaults.standardUserDefaults dictionaryForKey:settingsDefaultsKey()];
