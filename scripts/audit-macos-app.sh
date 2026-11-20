@@ -18,6 +18,9 @@ bundle_id=$(plutil -extract CFBundleIdentifier raw -- "$info")
 bundle_executable=$(plutil -extract CFBundleExecutable raw -- "$info")
 [[ "$bundle_executable" == "SnapPad" ]] || \
     die "unexpected native SnapPad bundle executable: $bundle_executable"
+icon_file=$(plutil -extract CFBundleIconFile raw -- "$info" 2>/dev/null || true)
+[[ -n "$icon_file" && -s "$app/Contents/Resources/${icon_file%.icns}.icns" ]] || \
+    die "native SnapPad app has no icon (CFBundleIconFile '$icon_file' missing from Resources)"
 [[ "$(lipo -archs "$binary")" == "arm64" ]] || \
     die "native SnapPad executable is not arm64-only"
 
@@ -37,4 +40,4 @@ forbidden=$(find "$app" -type f \( \
 [[ -z "$forbidden" ]] || \
     die "native SnapPad bundle contains forbidden ROM/build inputs: $forbidden"
 
-note "Native macOS app audit passed (identity, arm64, system-only dylibs, path-clean, no ROM/source inputs)."
+note "Native macOS app audit passed (identity, icon, arm64, system-only dylibs, path-clean, no ROM/source inputs)."
