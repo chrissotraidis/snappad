@@ -14,8 +14,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum iOS version" FORCE)
 endif()
 
-set(SNAPPAD_VERSION "0.2.2")
-set(SNAPPAD_BUILD_NUMBER "5")
+set(SNAPPAD_VERSION "0.2.3")
+set(SNAPPAD_BUILD_NUMBER "6")
 set(SNAPPAD_BUILD_PROFILE "community-preview")
 set(DEVELOPMENT_TEAM "" CACHE STRING
     "Apple development team used for signed iPhoneOS builds")
